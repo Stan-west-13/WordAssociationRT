@@ -167,7 +167,7 @@ ggplot(rt_df_long_psychling, aes(x = condition, y = value, fill = condition))+
 ## 
 
 
-```{r}
+```{r, message=FALSE}
 rt_df_long_psychling <- rt_df %>% 
   pivot_longer(cols = c("Lg10WF","AoA_Kup_lem","Nphon","Nsyll","Nletters"),
                names_to = "metric",
