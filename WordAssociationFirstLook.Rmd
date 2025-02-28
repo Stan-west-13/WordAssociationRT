@@ -111,7 +111,9 @@ kable(tbl_unknown)
 # Reaction time 
 
 
-### Response time participant distributions 
+### Response time participant distributions
+
+I think the participant at 6,000 ms was skewing things a bit because they have extreme values even within 3 standard deviations of their mean
 
 ```{r}
 pp_means <- combined_meta %>%
@@ -120,7 +122,8 @@ pp_means <- combined_meta %>%
   mutate(participant = as.factor(participant))
 
 ggplot(pp_means, aes(x = m,fill = condition))+
-  geom_density(alpha = 0.5)
+  geom_density(alpha = 0.5)+
+  facet_wrap(~condition)
 
 ```
 
@@ -197,4 +200,59 @@ ggplot(rt_df_long_psychling, aes(x = condition, y = value, fill = condition))+
 
 
 ```
+
+
+
+
+```{r}
+x <- rt_df %>%
+  select(cue, condition, participant, rt_mili, type,stength_strat)
+
+x$mean_peer <- mean(x[x$condition == "peer",]$rt_mili)
+
+## Change back later
+y <- x %>%
+  mutate(diff = rt_mili - mean_peer) %>%
+  group_by(condition, participant) %>%
+  summarize(m_diff = mean(diff))
+  
+
+ggplot(y, aes(x = condition, y = diff, fill = condition)) +
+  geom_bar(stat = "summary", fun="mean")
+
+
+y <- x %>%
+  mutate(diff = rt_mili - mean_peer) %>%
+  group_by(condition, participant) %>%
+  summarize(m_diff = mean(diff))
+
+short_peer <- y %>%
+  filter(condition == "short") %>%
+  pull(m_diff)
+
+######
+pp_mean <- rt_df %>%
+  select(participant, condition, rt_mili) %>%
+  group_by(participant) %>%
+  mutate(means = mean(rt_mili)) %>%
+  select(-rt_mili) %>%
+  unique()
+
+t.test(pp_mean[pp_mean$condition == "short",]$means,pp_mean[pp_mean$condition == "child",]$means,var.equal = T )
+
+
+
+
+```
+
+
+```{r}
+
+ggplot(rt_df %>% group_by(participant, condition) %>% summarize(mean_length = mean(Nletters, na.rm = T), mean_rt = mean(rt_mili)) , aes(x = mean_rt, y = mean_length, color = condition))+
+  geom_point()+
+  facet_wrap(~condition)+
+  geom_smooth(method = "lm")
+
+```
+
 
