@@ -232,13 +232,13 @@ short_peer <- y %>%
 
 ######
 pp_mean <- rt_df %>%
-  select(participant, condition, rt_mili) %>%
-  group_by(participant) %>%
+  select(participant, condition,type,strength_strat, rt_mili) %>%
+  group_by(participant,type,strength_strat) %>%
   mutate(means = mean(rt_mili)) %>%
   select(-rt_mili) %>%
   unique()
 
-t.test(pp_mean[pp_mean$condition == "short",]$means,pp_mean[pp_mean$condition == "child",]$means,var.equal = T )
+t.test(pp_mean[pp_mean$condition == "short" & pp_mean$type == "co" & pp_mean$strength_strat == "low",]$means,pp_mean[pp_mean$condition == "peer" & pp_mean$type == "co" & pp_mean$strength_strat == "low",]$means,var.equal = T )
 
 
 
