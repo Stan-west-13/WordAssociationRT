@@ -1,0 +1,125 @@
+---
+title: "Word Association RT First Look"
+author: "Stan West"
+date: "2025-02-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(forcats)
+library(knitr)
+library(ggrepel)
+load("psychling/responses_metadata_2025-02-27.Rdata")
+combined_meta$rt_mili <- combined_meta$key_resp_cue.rt * 1000
+```
+
+Ideas in the lab have been circulating around an idea of "semantic warping", or the context-driven shifting of semantic weights that make concepts related to the context more available. Below, we describe a study investigating how response times to association generation may differ between conditions where you are given a coherent context to guide associative behavior versus explicit rules as to what kinds of responses are appropriate. 
+
+
+## Condition completion
+Target sample size is 30 per condition
+
+```{r,echo = FALSE,message=FALSE}
+tbl <- combined_meta %>%
+  select(participant, condition) %>%
+  unique() %>%
+  count(condition)
+
+
+ggplot(tbl, aes(x = condition, y = n, fill = condition))+
+  geom_bar(stat = "summary")+
+  geom_text(data = tbl, aes(label = n))
+
+```
+
+
+# Participant-wise behavior over cues
+
+### Regressing blank response cues with Prevalence. Removing responses faster than 150 ms and anything further than 3SDs from the participant-wise mean
+
+This was accomplished by filtering out response latencies less than 150ms, grouping by participant and computing z-scores, and filtering out responses that are more than three standard deviations away from the participant means. I then plot the cues in terms of their Prevalence in the MOESM database and their missingness in our response set.
+
+```{r, message=FALSE, echo=FALSE,warning=FALSE}
+unknown <- combined_meta %>%
+  filter(rt_mili > 150) %>%
+  group_by(participant) %>%
+  mutate(z_rt = (rt_mili - mean(rt_mili))/sd(rt_mili)) %>%
+  filter(z_rt > -3, z_rt < 3, response == "") %>%
+  group_by(cue) %>%
+  mutate(sum_unknown = sum(response == "")) %>%
+  select(cue, Prevalence,Pknown, sum_unknown) %>%
+  unique() %>%
+  ungroup()
+
+ggplot(unknown, aes(x = Pknown, y = sum_unknown))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  geom_label_repel(aes(label = cue),
+                   box.padding = 0.35,
+                   point.padding = 0.5,
+                   max.overlaps = 25)+
+  ggtitle("Blank Responses by Percentage known")
+
+ggplot(unknown, aes(x = Prevalence, y = sum_unknown))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  geom_label_repel(aes(label = cue),
+                   box.padding = 0.35,
+                   point.padding = 0.5,
+                   max.overlaps = 15)+
+  ggtitle("Blank Responses by Prevalence")
+
+
+
+
+```
+
+### Participant Z-scored response time by cue. In descending order of number of missing responses. Same procedure as above, but did not filter on standard deviations from the particpant means.
+
+```{r, message=FALSE, echo=FALSE,warning=FALSE}
+unknown_z <- combined_meta %>%
+  filter(rt_mili > 150) %>%
+  group_by(participant) %>%
+  mutate(z_rt = (rt_mili - mean(rt_mili))/sd(rt_mili)) %>%
+  #filter(z_rt > -3, z_rt < 3, response == "") %>%
+  group_by(cue) %>%
+  mutate(sum_unknown = sum(response == "")) %>%
+  select(cue, z_rt,Prevalence, sum_unknown) %>%
+  unique() %>%
+  ungroup()
+
+
+
+ggplot(unknown_z %>% mutate(cue = fct_reorder(cue, as.integer(sum_unknown))), aes(y = cue, x = z_rt))+
+  geom_bar(stat = "summary", fun.x = "mean")+
+  theme(axis.text.y = element_text(size = 6))+
+  ggtitle("Z-scored Response Times by Cue")
+
+tbl_unknown <- unknown %>%
+  select(cue,sum_unknown) %>%
+  unique() %>%
+  arrange(desc(sum_unknown))
+
+kable(tbl_unknown)
+
+```
+
+
+# Reaction time 
+Data presented henceforth is excluding response quicker than 150 ms and more than 3 standard deviations from the participant-wise mean
+
+
+
+```{r}
+
+
+```
+
+
+
+
+
+
