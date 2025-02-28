@@ -109,8 +109,25 @@ kable(tbl_unknown)
 
 
 # Reaction time 
-Data presented henceforth is excluding response quicker than 150 ms and more than 3 standard deviations from the participant-wise mean. Also excluded responses above the 90th percentile of all responses.
 
+
+### Response time participant distributions 
+
+```{r}
+pp_means <- combined_meta %>%
+  group_by(participant) %>%
+  mutate(m = mean(rt_mili)) %>%
+  mutate(participant = as.factor(participant))
+
+ggplot(pp_means, aes(x = m,fill = condition))+
+  geom_density(alpha = 0.5)
+
+```
+
+
+
+
+Data presented henceforth is excluding response quicker than 150 ms and more than 3 standard deviations from the participant-wise mean. Also excluded responses above the 90th percentile of all responses.
 
 
 ```{r, include=FALSE}
