@@ -109,17 +109,75 @@ kable(tbl_unknown)
 
 
 # Reaction time 
-Data presented henceforth is excluding response quicker than 150 ms and more than 3 standard deviations from the participant-wise mean
+Data presented henceforth is excluding response quicker than 150 ms and more than 3 standard deviations from the participant-wise mean. Also excluded responses above the 90th percentile of all responses.
 
 
+
+```{r, include=FALSE}
+rt_df <- combined_meta %>%
+  filter(rt_mili > 150, !rt_mili > quantile(rt_mili, 0.90)) %>%
+  group_by(participant) %>%
+  mutate(mean_pp = mean(rt_mili),
+         sd_pp = sd(rt_mili),
+         z_rt_pp = (rt_mili - mean_pp)/sd_pp) %>%
+  filter(z_rt_pp > -3 , z_rt_pp < 3) %>%
+  ungroup() %>%
+  mutate(overall_z = (mean_pp - mean(rt_mili))/sd(rt_mili))
+
+```
+
+## Reaction time by condition
+
+```{r, message=FALSE, echo=FALSE,warning=FALSE}
+ggplot(rt_df, aes(x = condition, y = rt_mili, fill = condition))+
+  geom_bar(stat = "summary", fun = "mean")
+
+```
+
+## Reaction time by condition and word-type 
+
+```{r, message=FALSE, echo=FALSE,warning=FALSE}
+ggplot(rt_df %>% 
+         group_by(condition) %>% 
+         mutate(mean = mean(rt_mili),
+                se = sd(rt_mili)/sqrt(n())), aes(x = condition, y = rt_mili, fill = condition))+
+  geom_bar(stat = "summary", fun = "mean") +
+  facet_wrap(~type + strength_strat)
+
+```
+
+
+# Psycholingusitc measures
+##Same dataframe as above, but looking at distribution of psycholinguistic measures by condition.
 
 ```{r}
+rt_df_long_psychling <- rt_df %>% 
+  pivot_longer(cols = c("Lg10WF","AoA_Kup_lem","Nphon","Nsyll","Nletters"),
+               names_to = "metric",
+               values_to = "value")
+
+ggplot(rt_df_long_psychling, aes(x = condition, y = value, fill = condition))+
+  geom_bar(stat = "summary", fun = "mean")+
+  facet_wrap(~metric, scales = "free")
 
 
 ```
 
 
+## 
 
 
+```{r}
+rt_df_long_psychling <- rt_df %>% 
+  pivot_longer(cols = c("Lg10WF","AoA_Kup_lem","Nphon","Nsyll","Nletters"),
+               names_to = "metric",
+               values_to = "value")
 
+ggplot(rt_df_long_psychling, aes(x = condition, y = value, fill = condition))+
+  geom_bar(stat = "summary", fun = "mean")+
+  theme(axis.text.x = element_text(angle = 90) )+
+  facet_grid(type~metric, scales = "free")
+
+
+```
 
