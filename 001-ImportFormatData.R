@@ -1,17 +1,28 @@
 library(dplyr)
 library(tidyr)
 library(purrr)
+library(stringr)
 library(readxl)
 library(ggplot2)
 library(geomtextpath)
 ## Load functions
 combine_files <- function(files){
    dataf <- data.frame()
+   
    for (file in files){
-    file_csv <- list.files(file)
-    df <- read.csv(paste0(file,"/",file_csv[1]))[-1,]
-    dataf <- rbind(dataf,df)
+     if (any(str_detect(list.files(file), ".xlsx"))){
+       file_xl <- list.files(file, pattern = "*.xlsx")
+       df <- read_xlsx(paste0(file,"/",file_xl[1]))[-1,]
+       dataf <- rbind(dataf,df)
+     }
+      else {
+        file_csv <- list.files(file,pattern = "*.csv")
+        df <- read.csv(paste0(file,"/",file_csv[1]))[-1,-25]
+        dataf <- rbind(dataf,df)
+      }
+     
    }
+   
    return(dataf)
 }
 
@@ -23,7 +34,7 @@ words <- read.csv("psychling/stim_64_NNVB_wcuss.csv")[,-1]
 familiarity <- read_xlsx("psychling/13428_2018_1077_MOESM2_ESM.xlsx")[,-6]
 ## Combine data over participants
 pp_files <- list.files("data",full.names = TRUE)
-combined <- combine_files(pp_files)[,-25]
+combined <- combine_files(pp_files)
 
 combined_meta <- combined %>%
    left_join(sub, by = c("response" = "Word")) %>%
