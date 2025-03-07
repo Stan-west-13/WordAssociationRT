@@ -69,7 +69,8 @@ responses_table <- resp_behavior_table %>%
 ## Response behavior table setup finish
 response_behavior_table <- resp_behavior_table %>%
   left_join(responses_table %>% rename(response_id = id), by = "response") %>%
-  select(id, subject_id , cue_order, cue_id, response_id, -response)
+  select(id, subject_id , cue_order, cue_id, response_id, -response) %>%
+  filter(!is.na(response_id))
 
 
 ## Cues and resposnes table
