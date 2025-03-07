@@ -1,18 +1,18 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE subjects (
-  PPID TEXT PRIMARY KEY NOT NULL,
-  condition TEXT,
+  subject_id TEXT PRIMARY KEY NOT NULL,
+  condition TEXT
 );
 
 
 CREATE TABLE response_behaviors (
   id INTEGER PRIMARY KEY NOT NULL,
-  PPID TEXT NOT NULL,
+  subject_id TEXT NOT NULL,
   cue_order INTEGER NOT NULL,
   cue_id INTEGER NOT NULL,
   response_id INTEGER NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (cue_id) REFERENCES cues(id),
   FOREIGN KEY (response_id) REFERENCES responses(id)
 );
@@ -66,7 +66,7 @@ VALUES
   (6, "Melody", "Moon", "yseok1@lsu.edu"),
   (7, "Sophie", "Vidrine", "svidri8@lsu.edu"),
   (8, "Francesca", "Thomassee", "fthom22@lsu.edu"),
-  (9, "Marissa", "Goldthorpe", "mgoldt1@lsu.edu"),
+  (9, "Marissa", "Goldthorpe", "mgoldt1@lsu.edu")
 ;
 
 
@@ -89,11 +89,11 @@ CREATE TABLE words_meta (
 
 CREATE TABLE subject_decisions (
   id INTEGER PRIMARY KEY,
-  PPID INTEGER NOT NULL,
+  subject_id INTEGER NOT NULL,
   decision_id INTEGER NOT NULL,
   researcher_id INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (decision_id) REFERENCES decisions(id),
   FOREIGN KEY (researcher_id) REFERENCES researchers(id)
 );
@@ -104,7 +104,7 @@ CREATE TABLE subject_locks (
   subject_id INTEGER NOT NULL,
   researcher_id INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (researcher_id) REFERENCES researchers(id)
 );
 

@@ -46,7 +46,8 @@ cue_table <- metadata %>%
 
 ## Response behavior table setup
 resp_behavior_table <- metadata %>%
-  select(PPID,
+  filter(!response == "") %>%
+  select(subject_id = PPID,
          cue_order,
          cue,
          response) %>%
@@ -68,7 +69,7 @@ responses_table <- resp_behavior_table %>%
 ## Response behavior table setup finish
 response_behavior_table <- resp_behavior_table %>%
   left_join(responses_table %>% rename(response_id = id), by = "response") %>%
-  select(id, PPID, cue_order, cue_id, response_id, -response)
+  select(id, subject_id , cue_order, cue_id, response_id, -response)
 
 
 ## Cues and resposnes table
@@ -108,9 +109,10 @@ response_map_table <- cues_responses_table %>%
 ## PP table
 subjects_table <- metadata %>%
   select(
-    PPID,
+    subject_id = PPID,
     condition
-  )
+  ) %>%
+  unique()
 
 words_meta_table <- kuperman_table %>%
   select(word, kuperman_id = id) %>%
