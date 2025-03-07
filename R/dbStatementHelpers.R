@@ -15,7 +15,7 @@ read_sql_schema <- function(file) {
 
 dbExecuteList <- function(conn, x) {
     dbWithTransaction(conn, {
-        purrr::walk(x, dbExecute, conn = conn)
+        purrr::walk(x, DBI::dbExecute, conn = conn)
     })
 }
 

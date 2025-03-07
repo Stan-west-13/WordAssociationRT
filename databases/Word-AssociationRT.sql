@@ -2,7 +2,7 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE subjects (
   PPID TEXT PRIMARY KEY NOT NULL,
-  condition TEXT,
+  condition TEXT
 );
 
 
@@ -66,7 +66,7 @@ VALUES
   (6, "Melody", "Moon", "yseok1@lsu.edu"),
   (7, "Sophie", "Vidrine", "svidri8@lsu.edu"),
   (8, "Francesca", "Thomassee", "fthom22@lsu.edu"),
-  (9, "Marissa", "Goldthorpe", "mgoldt1@lsu.edu"),
+  (9, "Marissa", "Goldthorpe", "mgoldt1@lsu.edu")
 ;
 
 
@@ -101,7 +101,7 @@ CREATE TABLE subject_decisions (
 CREATE TABLE subject_locks (
   id INTEGER PRIMARY KEY,
   hash TEXT NOT NULL UNIQUE,
-  subject_id INTEGER NOT NULL,
+  PPID INTEGER NOT NULL,
   researcher_id INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
   FOREIGN KEY (PPID) REFERENCES subjects(PPID),

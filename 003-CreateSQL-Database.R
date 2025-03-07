@@ -68,7 +68,8 @@ responses_table <- resp_behavior_table %>%
 ## Response behavior table setup finish
 response_behavior_table <- resp_behavior_table %>%
   left_join(responses_table %>% rename(response_id = id), by = "response") %>%
-  select(id, PPID, cue_order, cue_id, response_id, -response)
+  select(id, PPID, cue_order, cue_id, response_id, -response) %>%
+  filter(!is.na(response_id))
 
 
 ## Cues and resposnes table
@@ -110,7 +111,8 @@ subjects_table <- metadata %>%
   select(
     PPID,
     condition
-  )
+  ) %>%
+  unique()
 
 words_meta_table <- kuperman_table %>%
   select(word, kuperman_id = id) %>%
