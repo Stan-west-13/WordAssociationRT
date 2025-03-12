@@ -42,9 +42,7 @@ ex_data %>%
   group_by(condition, cue) %>%
   mutate(mean_aoa = mean(aoa, na.rm = T))
 
+##Test
 
-## Add some text
-
-1 + 1
 
 
