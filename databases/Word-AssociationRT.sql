@@ -1,18 +1,18 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE subjects (
-  PPID TEXT PRIMARY KEY NOT NULL,
+  subject_id TEXT PRIMARY KEY NOT NULL,
   condition TEXT
 );
 
 
 CREATE TABLE response_behaviors (
   id INTEGER PRIMARY KEY NOT NULL,
-  PPID TEXT NOT NULL,
+  subject_id TEXT NOT NULL,
   cue_order INTEGER NOT NULL,
   cue_id INTEGER NOT NULL,
   response_id INTEGER NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (cue_id) REFERENCES cues(id),
   FOREIGN KEY (response_id) REFERENCES responses(id)
 );
@@ -89,11 +89,11 @@ CREATE TABLE words_meta (
 
 CREATE TABLE subject_decisions (
   id INTEGER PRIMARY KEY,
-  PPID INTEGER NOT NULL,
+  subject_id INTEGER NOT NULL,
   decision_id INTEGER NOT NULL,
   researcher_id INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (decision_id) REFERENCES decisions(id),
   FOREIGN KEY (researcher_id) REFERENCES researchers(id)
 );
@@ -101,10 +101,10 @@ CREATE TABLE subject_decisions (
 CREATE TABLE subject_locks (
   id INTEGER PRIMARY KEY,
   hash TEXT NOT NULL UNIQUE,
-  PPID INTEGER NOT NULL,
+  subject_id INTEGER NOT NULL,
   researcher_id INTEGER NOT NULL,
   timestamp TEXT NOT NULL,
-  FOREIGN KEY (PPID) REFERENCES subjects(PPID),
+  FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
   FOREIGN KEY (researcher_id) REFERENCES researchers(id)
 );
 
