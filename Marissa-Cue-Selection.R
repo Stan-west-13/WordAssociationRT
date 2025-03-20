@@ -109,3 +109,50 @@ diff_table <- df_avg |>
 
 write_csv(diff_table, file = "diff_table.csv")
 
+## plotting aoa diff scores
+
+library(ggplot2)
+library(ggrepel)
+
+ggplot(data = diff_table, aes(x = cue, y = aoa)) +
+  geom_point() + 
+  geom_text_repel(aes(label = cue), max.overlaps = 30,
+                  position = position_nudge_repel(x = .05, y = .02)) +
+    theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+# Difference scores for CDI data from Cox & Haebig
+assoc_resp_stats <- readRDS("assoc_resp_stats.rds")
+
+## average scores for AoA of lemma, word frequency, and length by letters, phonemes, and syllables
+assoc_resp_avg <- assoc_resp_stats %>%
+  group_by(COND, CUE) %>%
+  summarize(
+    n_responses = n(),
+    n_unique = n_distinct(RESPONSE),
+    across(
+      c(AoA_Kup_lem, Lg10WF, Nletters, Nphon, Nsyll),
+      \(x) mean(x, na.rm = TRUE)
+    )
+  )
+
+full_diff_table <- assoc_resp_avg %>%
+  pivot_longer(cols = AoA_Kup_lem:Nsyll,
+               names_to = "metric",
+               values_to = "value") %>%
+  pivot_wider(
+    id_cols = c(CUE,metric),
+    names_from = COND,
+    values_from = value
+  ) %>%
+  mutate(diff = child - adult) %>%
+  pivot_wider(
+    id_cols = CUE,
+    names_from = metric,
+    values_from = diff
+  )
+
+
+
+
