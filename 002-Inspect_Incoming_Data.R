@@ -1,4 +1,4 @@
-load("psychling/responses_metadata_2025-02-27.Rdata")
+load("psychling/responses_metadata_2025-03-24.Rdata")
 library(dplyr)
 library(tidyr)
 library(purrr)
@@ -128,8 +128,14 @@ meta_long %>%
    summarize(m = mean(value, na.rm = T))
 
 
-#m <- ezANOVA(data = combined_meta,
-#             dv = key_resp_cue.rt,
-#             within = c(type,strength_strat,cue),
-#             between = condition,
-#             wid = participant)
+m <- ezANOVA(data = combined_meta,
+             dv = key_resp_cue.rt,
+             within = c(type,strength_strat,cue),
+             between = condition,
+             wid = participant)
+
+
+
+
+
+
