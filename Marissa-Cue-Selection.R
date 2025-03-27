@@ -194,3 +194,7 @@ simple_diff_table <- simple_avg %>%
   )
 
 write.csv(simple_diff_table, file = "simple_diff.csv")
+
+
+## selection
+full_diff_table |> filter(AoA_Kup_lem < -.4, Nletters < -.15, Lg10WF > .2)

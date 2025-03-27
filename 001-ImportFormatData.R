@@ -1,5 +1,6 @@
 library(dplyr)
 library(tidyr)
+library(readr)
 library(purrr)
 library(stringr)
 library(readxl)
@@ -33,15 +34,43 @@ aoa <- read.csv("psychling/AoA_51715_words.csv")
 words <- read.csv("psychling/stim_64_NNVB_wcuss.csv")[,-1]
 familiarity <- read_xlsx("psychling/13428_2018_1077_MOESM2_ESM.xlsx")[,-6]
 ## Combine data over participants
-pp_files <- list.files("data",full.names = TRUE)
-combined <- combine_files(pp_files)
+## when listing the files, we are just getting the .csv files 
+## and listing them in the first place
+pp_files <- list.files("data", recursive = TRUE, pattern = "*.csv", full.names = TRUE)
+
+## map runs a command for each element for the list in the first argument
+## apply the function after the comma to all of the files
+combined <- map(pp_files, function(filename)  {
+  x <- read_csv(
+    filename, 
+    show_col_types = FALSE, 
+    col_select = c(-thisRow.t, -notes, -25)
+     ) |>
+    mutate(participant = parse_number(filename)) |>
+          drop_na(cue)
+  return(x)
+}) |> list_rbind()
+
+count(combined, participant) |> count(n)
 
 combined_meta <- combined %>%
    left_join(sub, by = c("response" = "Word")) %>%
    left_join(aoa, by = c("response" = "Word")) %>%
    left_join(words, by = "cue") %>%
    left_join(familiarity, by = c("cue" = "Word"))
-save(combined_meta, file = paste0("psychling/","responses_metadata_",Sys.Date(),".Rdata"))
+
+## R data files can contain many objects and contain their names
+## helpful when R wants to save your workspace
+## rds stores just the data, so when reading it back in, you can assign it to a variable
+## you have control over what it is going to be called
+
+## file.path puts / in for you and handles that for you depending on the system
+save(combined_meta, 
+     file = file.path(
+       "psychling",
+       paste0("responses_metadata_",Sys.Date(),".rds")
+     )
+)
 
 ## Running count
 combined_meta %>%
