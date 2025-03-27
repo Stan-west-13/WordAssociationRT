@@ -153,28 +153,21 @@ full_diff_table <- assoc_resp_avg %>%
     values_from = diff
   )
 
-library(ggplot2)
-
-full_diff_table |>
-  ggplot(aes(x = Nletters, y = AoA_Kup_lem, color = Lg10WF)) +
-  geom_point()
-
 write.csv(full_diff_table, file = "full_diff.csv")
 
 # Simplified diff scores
 assoc_resp_simple <- readRDS("assoc-response-stats-simple.rds")
 
 #avg scores for nlength, AoA_Kup_lemma, and frequency
-# multiply the nletters by the n column, then when dividing, divide by the sum of the n column
-
 simple_avg <- assoc_resp_simple %>%
   group_by(COND, CUE) %>%
   summarize(
      n_responses = sum(n),
      n_unique = n(),
-     Nletters = sum(Nletters * n) / sum(n),
-     Lg10WF = sum(Lg10WF * n) / sum(n),
-     AoA_Kup_lem = sum(AoA_Kup_lem * n) / sum(n)
+        across(
+          c(Nletters, Lg10WF, AoA_Kup_lem),
+          \(x) mean(x, na.rm = TRUE)
+        )
   )
 
 simple_diff_table <- simple_avg %>%
@@ -194,7 +187,3 @@ simple_diff_table <- simple_avg %>%
   )
 
 write.csv(simple_diff_table, file = "simple_diff.csv")
-
-
-## selection
-full_diff_table |> filter(AoA_Kup_lem < -.4, Nletters < -.15, Lg10WF > .2)
