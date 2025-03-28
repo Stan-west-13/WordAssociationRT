@@ -1,9 +1,19 @@
-load("psychling/responses_metadata_2025-03-24.Rdata")
+load("psychling/responses_metadata_2025-03-28.Rdata")
 library(dplyr)
 library(tidyr)
 library(purrr)
 library(ggplot2)
 library(ez)
+
+## Running count by condition
+
+combined_meta %>%
+  select(participant, condition) %>%
+  unique() %>%
+  group_by(condition) %>%
+  summarize(n())
+
+
 ## Check completness
 ## By participant
 unknown_plot <- combined_meta %>%
