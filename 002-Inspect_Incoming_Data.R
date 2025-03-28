@@ -1,9 +1,19 @@
-load("psychling/responses_metadata_2025-03-24.Rdata")
+load("psychling/responses_metadata_2025-03-28.Rdata")
 library(dplyr)
 library(tidyr)
 library(purrr)
 library(ggplot2)
 library(ez)
+
+## Running count by condition
+
+combined_meta %>%
+  select(participant, condition) %>%
+  unique() %>%
+  group_by(condition) %>%
+  summarize(n())
+
+
 ## Check completness
 ## By participant
 unknown_plot <- combined_meta %>%
@@ -13,7 +23,7 @@ unknown_plot <- combined_meta %>%
 ggplot(unknown_plot,aes(x = unknown)) +
    geom_histogram() +
    labs(y = "Participant Count", x = "# unknown")
-ggsave(filename = "Figures/Unknown_cues.png")
+#ggsave(filename = "Figures/Unknown_cues.png")
 
 ## By condition
 unknown_plot_by_cond <-combined_meta %>%
@@ -23,7 +33,7 @@ unknown_plot_by_cond <-combined_meta %>%
 
 ggplot(unknown_plot_by_cond, aes(x = condition, y = unknown, fill = condition))+
    geom_col()
-ggsave("Figures/unknown_by_condition.png")
+#ggsave("Figures/unknown_by_condition.png")
 
 ## By word-type
 unknown_wordtype <- combined_meta %>%
@@ -34,7 +44,7 @@ unknown_wordtype <- combined_meta %>%
 ggplot(unknown_wordtype, aes(x = strength_strat, y = unknown, fill = type))+
    geom_col(position = "dodge")+
    facet_wrap(~condition)
-ggsave('Figures/unknown_by_wordtypecond.png')
+#ggsave('Figures/unknown_by_wordtypecond.png')
 
 ## By word
 unknown_words <- combined_meta %>%
@@ -47,7 +57,7 @@ ggplot(unknown_words, aes(x = unknown, y = cue, fill = type))+
    geom_col(position = 'dodge',aes( alpha= strength_strat))+
    scale_alpha_manual(values=c(1, 0.45))
 
-ggsave("Figures/unknown_words.png")
+#ggsave("Figures/unknown_words.png")
 
 ## Plot rt
 
@@ -85,14 +95,14 @@ ggsave("Figures/rt_dist_condition_type.png")
 ggplot(meta_z, aes(x = condition, y = rt_mili, fill = condition)) +
     geom_violin() +
     geom_boxplot(fill = "grey", width = 0.15)
-ggsave("Figures/rt_dist_condition.png")
+#ggsave("Figures/rt_dist_condition.png")
 
 ggplot(meta_z, aes(x = condition, y = rt_mili, fill = condition))+
    geom_bar(stat = "summary",fun = "mean")+
    facet_wrap(~strength_strat+type, scales = "fixed")+
    geom_text(data = text_df, aes(label = round(rt_mili,2),vjust =0))+
    scale_y_continuous(breaks = seq(0,2500,250))
-ggsave("Figures/rt_bar_means_condition_type.png")
+#ggsave("Figures/rt_bar_means_condition_type.png")
 
 
 meta_z %>%
@@ -116,13 +126,13 @@ ggplot(meta_long, aes(x = condition, y = value, color = condition))+
    geom_violin()+
    geom_boxplot(fill = "grey", width = 0.25)+
    facet_wrap(~metric, scales = 'free')
-ggsave("Figures/psycholing_dist_condition_type.png")
+#ggsave("Figures/psycholing_dist_condition_type.png")
 
 ggplot(meta_long, aes(x = condition, y = value, fill = condition))+
    geom_bar(stat = "summary", fun = "mean")+
    facet_wrap(~metric, scales = 'free')+
    geom_text(data = text_psycholing, aes(label = round(value, 2)),vjust=0)
-ggsave("Figures/psycholing_bar_mean_condition.png")
+#ggsave("Figures/psycholing_bar_mean_condition.png")
 
 
 
@@ -136,7 +146,6 @@ m <- ezANOVA(data = combined_meta,
              within = c(type,strength_strat,cue),
              between = condition,
              wid = participant)
-
 
 
 
