@@ -5,6 +5,8 @@ library(purrr)
 library(ggplot2)
 library(ez)
 
+library(pastecs); library(psych); library(tidyverse); library(rstatix)
+
 
 ## Running count by condition
 
@@ -152,9 +154,12 @@ m <- ezANOVA(data = combined_meta,
 ## Analysis RT
 ##---------------------------
 
-## Descriptives of RT
+## Descriptives for RT
 
+describe(combined_meta$rt)
 
+rt_raw_dis <- ggplot(combined_meta, aes(x=rt)) + geom_histogram()
+rt_raw_dis
 
 ## Mixed ANOVA (condition and cue) on RT
 
