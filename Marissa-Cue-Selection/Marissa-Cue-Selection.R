@@ -1,5 +1,6 @@
 library(dplyr)
 library(tidyr)
+library(ggplot2)
 load("psychling/responses_formatted_1032023.Rdata")
 
 # reverse coded data frame
@@ -154,6 +155,13 @@ full_diff_table <- assoc_resp_avg %>%
   )
 
 write.csv(full_diff_table, file = "full_diff.csv")
+
+ggplot(full_diff_table, aes(x = Nletters, y = AoA_Kup_lem)) +
+  geom_point(aes(color = Lg10WF))
+
+full <- full_diff_table %>% filter(Nletters < -.35, Lg10WF > .1, AoA_Kup_lem < -0.35)
+print(full)
+
 
 # Simplified diff scores
 assoc_resp_simple <- readRDS("assoc-response-stats-simple.rds")
