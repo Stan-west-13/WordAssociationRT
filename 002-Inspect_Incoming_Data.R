@@ -51,14 +51,17 @@ ggsave("Figures/unknown_words.png")
 
 ## Plot rt
 
+## Remove participants with high means
+combined_meta_rm_pp <- combined_meta %>%
+
 ## Filter responses quicker than 150 ms and 3 stadard deviaions from participant means
 meta_z <- combined_meta %>%
    filter(!response == "") %>%
    mutate(rt_mili = key_resp_cue.rt * 1000) %>%
    filter(rt_mili > 150) %>%
-   group_by(strength_strat,type,condition) %>%
+   group_by(participant) %>%
    mutate(rt_z = (rt_mili - mean(rt_mili))/sd(rt_mili)) %>%
-   filter(rt_z < 1) %>%
+   filter(rt_z < 3) %>%
    ungroup()
 
 text_df <- combined_meta %>%
