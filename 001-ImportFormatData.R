@@ -41,7 +41,22 @@ combined_meta <- combined %>%
    left_join(aoa, by = c("response" = "Word")) %>%
    left_join(words, by = "cue") %>%
    left_join(familiarity, by = c("cue" = "Word"))
-save(combined_meta, file = paste0("psychling/","responses_metadata_",Sys.Date(),".Rdata"))
+
+
+load("psychling/responses_metadata_2025-03-28.Rdata")
+
+## Code for renaming and removing columns
+combined_meta <- combined_meta %>%
+  subset(select = -c(trials.thisRepN, trials.thisTrialN, trials.thisN, 
+                     trials.thisIndex, thisRow.t, notes, key_resp_cue.started, 
+                     cue_pres_trial.started)) %>%
+  rename(replace = c("textPrompt.stopped" = "cue_offset", "key_resp_cue.keys" = "key", 
+                     "key_resp_cue.rt" = "rt")) %>%
+  relocate("participant") %>%
+  relocate(c("date", "expName", "psychopyVersion", "frameRate", "expStart"), .after = "Pknown")
+
+save(combined_meta, file = paste0("psychling/","responses_metadata_",Sys.Date(),"_reformatted.Rdata"))
+
 
 ## Running count
 combined_meta %>%

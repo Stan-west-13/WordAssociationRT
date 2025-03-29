@@ -5,6 +5,9 @@ library(purrr)
 library(ggplot2)
 library(ez)
 
+library(pastecs); library(psych); library(tidyverse); library(rstatix)
+
+
 ## Running count by condition
 
 combined_meta %>%
@@ -147,7 +150,36 @@ m <- ezANOVA(data = combined_meta,
              between = condition,
              wid = participant)
 
+##---------------------------
+## Analysis RT
+##---------------------------
+
+## Descriptives for RT
+
+describe(combined_meta$rt)
+
+rt_raw_dis <- ggplot(combined_meta, aes(x=rt)) + geom_histogram()
+rt_raw_dis
+
+## Mixed ANOVA (condition and cue) on RT
 
 
+
+## Psycholing characteristics of responses by condition
+
+
+
+
+## Notes from meeting: 
+
+# 4 levels (conditions) between-subjects on RT 
+# cues are within
+
+#cue by condition mixed anova on RT
+
+#looking at how people responses look (are people generally making responses 
+#that are child oreinted in child context and it is meaningfully different frmo other conditions)
+
+# and sepearte anovas for psychling factors
 
 
