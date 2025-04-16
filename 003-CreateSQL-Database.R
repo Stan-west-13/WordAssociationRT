@@ -8,7 +8,7 @@ library(stringr)
 library(tidyr)
 
 ## Load data
-load("psychling/responses_metadata_2025-03-07.Rdata")
+load("psychling/responses_metadata_2025-03-28.Rdata")
 source("R/dbStatementHelpers.R")
 source("R/dbGetHelpers.R")
 
@@ -88,9 +88,8 @@ responses_table <- resp_behavior_table %>%
   select(response) %>%
   distinct() %>%
   arrange(response) %>%
-  mutate(id = seq_len(n()),
-         study_id = 3) %>%
-  select(id, study_id,response)
+  mutate(id = seq_len(n())) %>%
+  select(id, response)
 
 ## Response behavior table setup finish
 response_behavior_table <- resp_behavior_table %>%
