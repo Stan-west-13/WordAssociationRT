@@ -43,6 +43,9 @@ combined_meta <- combined %>%
    left_join(familiarity, by = c("cue" = "Word"))
 save(combined_meta, file = paste0("psychling/","responses_metadata_",Sys.Date(),".Rdata"))
 
+
+
+
 ## Running count
 combined_meta %>%
    select(condition,participant ) %>%
