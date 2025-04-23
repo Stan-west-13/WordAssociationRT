@@ -159,9 +159,72 @@ write.csv(full_diff_table, file = "full_diff.csv")
 ggplot(full_diff_table, aes(x = Nletters, y = AoA_Kup_lem)) +
   geom_point(aes(color = Lg10WF))
 
-full <- full_diff_table %>% filter(Nletters < -.35, Lg10WF > .1, AoA_Kup_lem < -0.35)
+exclude_words <- c("all gone", "bring", "gas station", "grrr", "hafta/have to",
+                   "on top of", "thank you", "wanna/want to", "your")
+
+full <- full_diff_table %>% filter(Nletters < -.35, Lg10WF > .1, AoA_Kup_lem < -0.35,
+                                   !CUE %in% exclude_words)
 print(full)
 
+## Response averages by condition over all responses and cues
+keep_cues <- droplevels(full$CUE[1:60])
+
+resp_avg <- assoc_resp_stats %>%
+  filter(CUE %in% keep_cues) %>%
+  group_by(COND, CUE) %>%
+  summarize(
+    n_responses = n(),
+    n_unique = n_distinct(RESPONSE),
+    across(
+      c(AoA_Kup_lem, Lg10WF, Nletters),
+      \(x) mean(x, na.rm = TRUE)
+    )
+  )
+
+cond_avg <- resp_avg %>%
+  mutate(COND = recode(COND, "adult" = "classical")) %>%
+  group_by(COND) %>%
+  summarize(
+    across(
+      c(AoA_Kup_lem, Lg10WF, Nletters),
+      \(x) mean(x)
+    )
+  )
+
+#add white noise
+white_noise <- cond_avg %>%
+  filter(COND == "classical") %>%
+  mutate(COND = "white noise")
+cond_avg <- bind_rows(cond_avg, white_noise)
+
+#bar plot
+AoA_plot <- ggplot(cond_avg, aes(x = COND, y = AoA_Kup_lem, fill = COND)) +
+  geom_bar(stat = "identity") +
+  scale_fill_grey() +
+  labs(title = "AoA", x = "Context", y = "Year of Acquisition") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+WF_plot <- ggplot(cond_avg, aes(x = COND, y = Lg10WF, fill = COND)) +
+  geom_bar(stat = "identity") +
+  scale_fill_grey() +
+  labs(title = "Lg10WF", x = "Context", y = "Frequency") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+Length_plot <- ggplot(cond_avg, aes(x = COND, y = Nletters, fill = COND)) +
+  geom_bar(stat = "identity") +
+  scale_fill_grey() +
+  labs(title = "Letters", x = "Context", y = "Length") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+library(ggpubr)
+ggarrange(AoA_plot, Length_plot, WF_plot, ncol = 3, nrow = 1, labels = c("A", "B", "C"))
 
 # Simplified diff scores
 assoc_resp_simple <- readRDS("assoc-response-stats-simple.rds")
