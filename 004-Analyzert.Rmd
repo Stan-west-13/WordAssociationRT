@@ -1,0 +1,53 @@
+---
+title: "Contextually Mediated Word Association Response Time"
+author: "Stan West"
+date: "2025-04-15"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+load("psychling/responses_metadata_2025-03-28_reformatted.Rdata")
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(ez)
+```
+
+## First inspections | Distributions {.smaller}
+- Right skew
+
+```{r, echo=FALSE,fig.align='center',fig.cap="Density plot of response times"}
+
+ggplot(combined_meta, aes(x = rt))+
+  geom_density()+
+  facet_grid(~condition)
+```
+
+## Removing outlier participants
+- Participants are considered outliers if their average response time is 2SDs above the grand average for that condition
+- Looks relatively normal in terms of outliers. May need to remove one participant in child condition.
+
+```{r}
+average_means <- combined_meta %>%
+  group_by(participant) %>%
+  mutate(mean_pp = mean(rt)) %>%
+  ungroup() %>%
+  mutate(z_condition_pp = (mean_pp - mean(rt))/sd(rt))
+
+ggplot(average_means, aes(x = z_condition_pp,fill=condition))+
+  geom_density()+
+  facet_wrap(~condition)+
+  labs(x = "Z-Scored Response Times")+
+  geom_vline(xintercept = 2,color = "red",linetype = 2)
+
+```
+
+## 
+
+
+
+
+
+
