@@ -50,14 +50,13 @@ combined_meta <- combined_meta %>%
   subset(select = -c(trials.thisRepN, trials.thisTrialN, trials.thisN, 
                      trials.thisIndex, thisRow.t, notes, key_resp_cue.started, 
                      cue_pres_trial.started)) %>%
-  rename(replace = c("textPrompt.stopped" = "cue_offset", "key_resp_cue.keys" = "key", 
-                     "key_resp_cue.rt" = "rt")) %>%
+  rename(c(cue_offset = textPrompt.stopped, key = key_resp_cue.keys, rt = key_resp_cue.rt)) %>%
   relocate("participant") %>%
   relocate(c("date", "expName", "psychopyVersion", "frameRate", "expStart"), .after = "Pknown")
 
 save(combined_meta, file = paste0("psychling/","responses_metadata_",Sys.Date(),"_reformatted.Rdata"))
 
-
+names(combined_meta)
 
 
 
@@ -72,7 +71,7 @@ combined_meta %>%
 ## Z-score response time based on participant mean and sd
 combined_meta <- combined_meta %>%
    group_by(participant) %>%
-   mutate(rt_mili = key_resp_cue.rt * 1000,
+   mutate(rt_mili = rt * 1000,
           sd_rt_mili = sd(rt_mili),
           z_rt = (rt_mili - mean(rt_mili))/sd(rt_mili)) %>%
    ungroup() %>%
