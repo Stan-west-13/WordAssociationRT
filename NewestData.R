@@ -1,4 +1,4 @@
-load("psychling/responses_metadata_2025-03-28_reformatted.Rdata")
+load("psychling/responses_metadata_2025-04-26_reformatted.Rdata") 
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -57,21 +57,22 @@ anova_df <- filter_participants %>%
   summarize(med_rt = median(rt)) %>%
   group_by(condition) |>
   mutate(med_rt_z = (med_rt - mean(med_rt)) / sd(med_rt))
-
+  
   filter(med_rt < 2000)
 
-  glmer_df <- filter_participants %>%
-    select(participant,condition,rt,cue) %>%
+  glmer_df <- filter_participants |>
+    select(participant,condition,rt,cue) |>
     filter(rt > 250) |>
-    group_by(participant) %>%
-    mutate(z_rt_pp = (rt - mean(rt))/sd(rt)) %>%
+    group_by(participant) |>
+    mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
     filter(z_rt_pp < 2.5) |>
     ungroup() |>
     mutate(
       participant = as.factor(participant),
       condition = factor(condition, c("child", "peer", "short", "creative")),
       cue = factor(cue)
-    )
+    ) |>
+    left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
   
     group_by(participant,condition)%>%
     summarize(med_rt = median(rt)) %>%
@@ -111,8 +112,29 @@ glmer_fit <- glmer(
 
 summary(glmer_fit)
 
+## Fit with cuewise variables
+glmer_fit_cue <- glmer(
+  rt ~ condition *(type|type/participant)*(strength_strat|strength_strat/participant) + (1 | cue),
+  data = glmer_df,
+  family = inverse.gaussian("identity")
+)
 
-library(fitdistrplus)
+summary(glmer_fit_cue)
+
+## group means for plot may 2025
+glmer_df %>%
+  group_by(condition) %>%
+  get_summary_stats(rt, type = c('mean_sd')) %>%
+  View()
+
+#number of cues
+length(unique(glmer_df$cue))
+
+##Contrasts with stan
+contrasts(glmer_df$condition)
+model.matrix(glmer_fit)
+
+library(fitdistrplus);library(fitdistrplus);library(fitdistrplus)
 
 q <- list(
   invgauss = fitdist(glmer_df$rt, distr = "invgauss",
@@ -157,3 +179,4 @@ legend(
   col = c("black", "red", "blue", "green"),
   lwd = 3
 )
+
