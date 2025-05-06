@@ -127,6 +127,11 @@ glmer_df %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
   View()
 
+## overall mean
+glmer_df %>%
+  get_summary_stats(rt, type = c('mean_sd')) %>%
+  View()
+
 #number of cues
 length(unique(glmer_df$cue))
 
