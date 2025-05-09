@@ -9,26 +9,14 @@ library(lmerTest)
 library(statmod)
 library(fitdistrplus)
 
-## No paggplot2## No participants are 3SDs outside of their condition's mean. But,
-## some participants may be driving condition means up. 
-combined_meta %>%
-  group_by(condition) %>%
-  reframe(participant = participant,
-            rt = rt,
-            m_cond = mean(rt),
-            sd_cond = sd(rt)) %>%
-  ungroup() %>%
-  group_by(participant) %>%
-  mutate(m_pp = mean(rt),
-         z_pp_cond = (mean(rt)-m_cond)/sd_cond) %>%
-  group_by(condition) %>%
-  reframe(sum(z_pp_cond >= 3))
+## Remove outliers and convert rt to miliseconds ####################
+filter_participants <- combined_meta %>%
+  filter(!participant %in% c("TTA_067","TTA_068")) %>%
+  mutate(rt = rt *1000)
 
 
-
-
-
-
+## Filter out responses faster than 250ms and responses that are more than 
+## 2.5 standard deviations away from participant mean ########################
 glmer_df <- filter_participants |>
   select(participant,condition,rt,cue) |>
   filter(rt > 250) |>
@@ -44,10 +32,7 @@ glmer_df <- filter_participants |>
   left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
   
 
-
-
-
-## Use this going forward.
+## Fit linear mixed model with fixed effect of condition and random intercepts for cues ###
 glmer_fit <- glmer(
   rt ~ condition + (1 | cue),
   data = glmer_df,
@@ -56,14 +41,7 @@ glmer_fit <- glmer(
 
 summary(glmer_fit)
 
-## Fit with cuewise variables
-glmer_fit_cue <- glmer(
-  rt ~ condition *(type|type/participant)*(strength_strat|strength_strat/participant) + (1 | cue),
-  data = glmer_df,
-  family = inverse.gaussian("identity")
-)
 
-summary(glmer_fit_cue)
 
 ## group means for plot may 2025
 glmer_df %>%
@@ -71,11 +49,8 @@ glmer_df %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
   View()
 
-## overall mean
-glmer_df %>%
-  get_summary_stats(rt, type = c('mean_sd')) %>%
-  View()
 
+## Fit model with association strength and word-type (co or non-co) strata
 glmer_df_type <- glmer_df %>%
   left_join(combined_meta %>% select(cue, type,strength_strat) %>% unique(), by = "cue")
 
@@ -89,10 +64,12 @@ glmer_fit_wordtype <- glmer(
 summary(glmer_fit_wordtype)
 
 
+## Contrasts #######################################
+contrasts(glmer_df$condition)
+model.matrix(glmer_fit)
 
 
-
-## Plotting model fit.
+## Plotting model fit ##############################
 q <- list(
   invgauss = fitdist(glmer_df$rt, distr = "invgauss",
                      start = list(mean=700, dispersion=300, shape=1)),
