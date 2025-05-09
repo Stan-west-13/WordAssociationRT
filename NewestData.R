@@ -112,6 +112,19 @@ glmer_fit <- glmer(
 summary(glmer_fit)
 
 
+glmer_df_type <- glmer_df %>%
+  left_join(combined_meta %>% select(cue, type,strength_strat) %>% unique(), by = "cue")
+
+glmer_fit_wordtype <- glmer(
+  rt ~ condition * type * strength_strat + (strength_strat:type|participant) + (1 | cue),
+  data = glmer_df_type,
+  family = inverse.gaussian("identity")
+)
+  
+
+summary(glmer_fit_wordtype)
+
+
 library(fitdistrplus)
 
 q <- list(
