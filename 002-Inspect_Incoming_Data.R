@@ -138,7 +138,6 @@ ggplot(meta_long, aes(x = condition, y = value, fill = condition))+
 #ggsave("Figures/psycholing_bar_mean_condition.png")
 
 
-
 meta_long %>%
    group_by(condition, metric) %>%
    summarize(m = mean(value, na.rm = T))
@@ -150,19 +149,12 @@ m <- ezANOVA(data = combined_meta,
              between = condition,
              wid = participant)
 
-##---------------------------
-## Analysis RT
-##---------------------------
-
 ## Descriptives for RT
 
 describe(combined_meta$rt)
 
 rt_raw_dis <- ggplot(combined_meta, aes(x=rt)) + geom_histogram()
 rt_raw_dis
-
-## Mixed ANOVA (condition and cue) on RT
-
 
 
 ## Psycholing characteristics of responses by condition
