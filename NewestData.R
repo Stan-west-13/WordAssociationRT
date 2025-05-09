@@ -7,6 +7,7 @@ library(purrr)
 library(lme4)
 library(lmerTest)
 library(statmod)
+library(fitdistrplus)
 
 ## No paggplot2## No participants are 3SDs outside of their condition's mean. But,
 ## some participants may be driving condition means up. 
@@ -23,84 +24,27 @@ combined_meta %>%
   group_by(condition) %>%
   reframe(sum(z_pp_cond >= 3))
 
-## Look at extreme responses across all participants.
-filter_responses <- combined_meta %>%
-  mutate(rt = rt *1000) %>%
-  filter(rt > 150) %>%
-  mutate(z_rt = (rt - mean(rt))/sd(rt),.after = rt,
-         is.extreme = ifelse(z_rt >= 3, TRUE,FALSE))
-##  67 and 68 are especially bad
-filter_responses %>%
-  group_by(participant) %>%
-  summarize(sum(is.extreme)) %>%
-  View()
-
-filter_participants <- combined_meta %>%
-  filter(!participant %in% c("TTA_067","TTA_068")) %>%
-  mutate(rt = rt *1000) %>%
-  filter(rt > 150) 
 
 
-splt_cond <- split(filter_participants,filter_participants$condition)
-keep_pps <- map_dfr(splt_cond, function(x){
-  sample(x$participant, size = 30)
-}) %>%
-  pivot_longer(cols = everything(),
-               names_to = "condition",
-               values_to = "participant")
 
-## ANOVA Response time
-anova_df <- filter_participants %>%
-  select(participant,condition,rt,cue) %>%
-  filter(participant %in% keep_pps$participant) %>%
-  group_by(participant,condition)%>%
-  summarize(med_rt = median(rt)) %>%
-  group_by(condition) |>
-  mutate(med_rt_z = (med_rt - mean(med_rt)) / sd(med_rt))
+
+
+glmer_df <- filter_participants |>
+  select(participant,condition,rt,cue) |>
+  filter(rt > 250) |>
+  group_by(participant) |>
+  mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
+  filter(z_rt_pp < 2.5) |>
+  ungroup() |>
+  mutate(
+    participant = as.factor(participant),
+    condition = factor(condition, c("child", "peer", "short", "creative")),
+    cue = factor(cue)
+  ) |>
+  left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
   
-  filter(med_rt < 2000)
-
-  glmer_df <- filter_participants |>
-    select(participant,condition,rt,cue) |>
-    filter(rt > 250) |>
-    group_by(participant) |>
-    mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
-    filter(z_rt_pp < 2.5) |>
-    ungroup() |>
-    mutate(
-      participant = as.factor(participant),
-      condition = factor(condition, c("child", "peer", "short", "creative")),
-      cue = factor(cue)
-    ) |>
-    left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
-  
-    group_by(participant,condition)%>%
-    summarize(med_rt = median(rt)) %>%
-    group_by(condition) |>
-    mutate(med_rt_z = (med_rt - mean(med_rt)) / sd(med_rt))
-  
-anova_df <- filter_participants %>%
-  select(participant,condition,rt,cue) %>%
-  filter(participant %in% keep_pps$participant) %>%
-  group_by(participant,condition)%>%
-  summarize(med_rt = median(rt)) %>%
-  filter(med_rt > 2000) %>%
-  group_by(condition) %>%
-  count()
-
-m <- ezANOVA(anova_df,
-             dv = rt,
-             wid = participant,
-             within = .(cue),
-             between = condition,)
 
 
-ggplot(anova_df |> filter(condition == "child"), aes(x = condition, y = rt, color = participant))+
-  geom_boxplot()
-  geom_point(position = "jitter")
-
-
-str(anova_df)
 
 
 ## Use this going forward.
@@ -132,7 +76,6 @@ glmer_df %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
   View()
 
-<<<<<<< HEAD
 glmer_df_type <- glmer_df %>%
   left_join(combined_meta %>% select(cue, type,strength_strat) %>% unique(), by = "cue")
 
@@ -146,18 +89,10 @@ glmer_fit_wordtype <- glmer(
 summary(glmer_fit_wordtype)
 
 
-library(fitdistrplus)
-=======
-#number of cues
-length(unique(glmer_df$cue))
 
-##Contrasts with stan
-contrasts(glmer_df$condition)
-model.matrix(glmer_fit)
 
-library(fitdistrplus);library(fitdistrplus);library(fitdistrplus)
->>>>>>> b71944273ff534e3523cbd07fb7c7f4582767ad9
 
+## Plotting model fit.
 q <- list(
   invgauss = fitdist(glmer_df$rt, distr = "invgauss",
                      start = list(mean=700, dispersion=300, shape=1)),
