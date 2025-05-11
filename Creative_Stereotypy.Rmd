@@ -1,0 +1,89 @@
+---
+title: "Creativity and Stereotypy Scores for Responses"
+output: html_notebook
+---
+
+Loading in necessary tools and data:
+
+```{r}
+load("~/RStudio Learning/An Introduction to R/WordAssociationRT/psychling/responses_metadata_2025-04-26_reformatted.Rdata")
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(ez)
+
+library(pastecs)
+library(psych)
+library(tidyverse)
+library(rstatix)
+```
+
+I used the code from "NewestData" that makes the data frame "filter_participants" that filters out any extreme values and extreme participants, which will be used to make the "norms_list". The norms list will be used for assigning the creative and stereotypy scores. 
+
+```{r}
+## No paggplot2## No participants are 3SDs outside of their condition's mean. But,
+## some participants may be driving condition means up. 
+combined_meta %>%
+  group_by(condition) %>%
+  reframe(participant = participant,
+            rt = rt,
+            m_cond = mean(rt),
+            sd_cond = sd(rt)) %>%
+  ungroup() %>%
+  group_by(participant) %>%
+  mutate(m_pp = mean(rt),
+         z_pp_cond = (mean(rt)-m_cond)/sd_cond) %>%
+  group_by(condition) %>%
+  reframe(sum(z_pp_cond >= 3))
+
+## Look at extreme responses across all participants.
+filter_responses <- combined_meta %>%
+  mutate(rt = rt *1000) %>%
+  filter(rt > 150) %>%
+  mutate(z_rt = (rt - mean(rt))/sd(rt),.after = rt,
+         is.extreme = ifelse(z_rt >= 3, TRUE,FALSE))
+##  67 and 68 are especially bad
+filter_responses %>%
+  group_by(participant) %>%
+  summarize(sum(is.extreme)) %>%
+  View()
+
+filter_participants <- combined_meta %>%
+  filter(!participant %in% c("TTA_067","TTA_068")) %>%
+  mutate(rt = rt *1000) %>%
+  filter(rt > 150)
+```
+
+Now, I will start to make the norms list. I am using the instructions from Fitzpatrick et al. 2013 for this, which is what Playfoot et al. 2016 used. 
+
+Firstly, I need to compile a full list of responses to the cue words and count up how many times each response was given for that cue. Then, I will need to order responses according to their frequency for that cue word, along with a record of that frequency.
+
+I am only concerned with having cues and responses from the peer condition for the norms list. I filter for only rows with the condition 'peer' and I filter out any responses that are blank.
+
+Now, for counting unique responses for that cue, I have to keep in mind that a response could be given for multiple cues (e.q. "fish" is given for both "barracuda" and "salmon"). So, when I mutate a new column to count the amount of unique responses for that given cue, I can't just count how many times that response occurs in the response column; I have to take into account the cue that was being responded to.
+
+So, for group_by, I am grouping by the cue-response pair. I then count the number of rows that exist for that pair with n() and mutate this to the column 'frequency_response'. 
+Now that I've confirmed that this works, I use distinct() to remove duplicate rows. 
+
+And voila!!! I have a norms list which has the number of responses made for each cue. 
+
+```{r}
+
+norms_list <- filter_participants %>%
+  select(cue, response, condition) %>%
+  filter(condition == 'peer') %>% 
+  filter(response != "") %>% 
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n()) %>% 
+  distinct()
+  
+```
+
+
+
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
