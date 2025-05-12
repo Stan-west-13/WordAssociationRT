@@ -82,8 +82,37 @@ norms_list <- filter_participants %>%
   distinct() %>% 
   ungroup() %>% 
   arrange(cue, desc(frequency_response))
-  
+
+norm_dic <- norms_list %>% 
+  select(cue,response)
+
 ```
+
+For the creative scores, a point is given if the response does not occur for that cue in the norms list. However, the response has to be related to the cue, which was judged by a lab member.
+
+I made a df that only includes the creative condition and takes out any blanks. In Playfoot, the creative scores were only given to the creative condition to compare stereotypy in the peer to creativity in the creative condition. The creative score is used to identify truly creative responses that are associated to the cue.
+
+So, after I filter everything, I group by participant and cue (e.g. TTA_006, salmon). Then, I add a new column to assign the creative scores with a 0 for if the response to that cue in the creative list also occurs in the norms_dic, and a 1 if the response to that cue in the creative list does not occur in the norms_dic. If the response to the cue in the creative list (e.g. fish) is found for any response to the current cue we are on (c(pink, fish, etc) to salmon), then we get a 0. The bit of code at the bottom I am keeping for demonstration purposes only, just so you can see what data frame is being used. 
+
+```{r}
+
+creative_list <- filter_participants %>% 
+  select(participant, cue, response, condition) %>% 
+  filter(condition == 'creative') %>% 
+  filter(response != "") %>% 
+  group_by(participant, cue) %>% 
+  mutate(creative_score = ifelse((response %in% norms_dic$response[norms_dic$cue == cue]), 0, 1))
+  
+creative_list$response[norms_dic$cue == creative_list$cue]
+```
+
+For the stereotypy scores, there are a couple things that need to happen. 
+
+Firstly, one point is given if a response is the response most commonly given to the cue in the norms list. 
+
+Secondly, if a cue has more than one response that has an equal chance of being given, then a point is awarded for given either response. (Would this also mean that if a cue has multiple responses with a frequency of 1 that any response that is on that list would get a point?)
+
+(Third, only data from participants who responded >90% of the time were used.)
 
 
 
