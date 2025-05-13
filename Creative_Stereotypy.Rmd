@@ -113,7 +113,9 @@ Secondly, if a cue has more than one response that has an equal chance of being 
 
 (Third, only data from participants who responded >90% of the time were used.)
 
-I grab each cue, and I want to evaluate what the highest frequency for a response is. Responses equal to that number for a cue get assigned a 1 and if not a 0. So, if a response for a cue is equal to the response for that cue with the highest frequency, assign that row a 1. If not, assign that row a zero. This also accounts for responses to a cue that have an equal number for the frequency_response. 
+I grab each cue, and I want to evaluate what the highest frequency for a response is. Responses equal to that number for a cue get assigned a 1 and if not a 0. So, if a response for a cue is equal to the response for that cue with the highest frequency, assign that row a 1. If not, assign that row a zero. This also accounts for responses to a cue that have an equal number for the frequency_response.
+
+Okay, so that works. Then, I grabbed the code from the norms_list and added the second section of code to it.
 
 ```{r}
 
@@ -129,7 +131,7 @@ norms_list %>%
     response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)]))
 
 #stereotypy scores for peer:
-stereotypy <- filter_participants %>%
+stereotypy_peer <- filter_participants %>%
   select(participant, cue, response, condition) %>%
   filter(condition == 'peer') %>% 
   filter(response != "") %>%
