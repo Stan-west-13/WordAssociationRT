@@ -6,7 +6,7 @@ output: html_notebook
 Loading in necessary tools and data:
 
 ```{r}
-load("~/RStudio Learning/An Introduction to R/WordAssociationRT/psychling/responses_metadata_2025-04-26_reformatted.Rdata")
+load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
 
 library(dplyr)
 library(tidyr)
