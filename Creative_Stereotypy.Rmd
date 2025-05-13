@@ -101,19 +101,49 @@ creative_list <- filter_participants %>%
   filter(condition == 'creative') %>% 
   filter(response != "") %>% 
   group_by(participant, cue) %>% 
-  mutate(creative_score = ifelse((response %in% norms_dic$response[norms_dic$cue == cue]), 0, 1))
-  
-creative_list$response[norms_dic$cue == creative_list$cue]
+  mutate(creative_score = ifelse((response %in% norms_dic$response[cue == norms_dic$cue]), 0, 1))
+
 ```
 
 For the stereotypy scores, there are a couple things that need to happen. 
 
 Firstly, one point is given if a response is the response most commonly given to the cue in the norms list. 
 
-Secondly, if a cue has more than one response that has an equal chance of being given, then a point is awarded for given either response. (Would this also mean that if a cue has multiple responses with a frequency of 1 that any response that is on that list would get a point?)
+Secondly, if a cue has more than one response that has an equal chance of being given, then a point is awarded for giving either response. (Would this also mean that if a cue has multiple responses with a frequency of 1 that any response that is on that list would get a point?)
 
 (Third, only data from participants who responded >90% of the time were used.)
 
+I grab each cue, and I want to evaluate what the highest frequency for a response is. Responses equal to that number for a cue get assigned a 1 and if not a 0. So, if a response for a cue is equal to the response for that cue with the highest frequency, assign that row a 1. If not, assign that row a zero. This also accounts for responses to a cue that have an equal number for the frequency_response. 
+
+```{r}
+
+#this gives me the highest frequency number for each cue.
+norms_list %>% 
+  group_by(cue) %>% 
+  summarise(max(frequency_response))
+
+#as.integer converts TRUE and FALSE to 1 and 0
+norms_list %>% 
+  group_by(cue) %>% 
+  mutate(highest_frequency = as.integer(
+    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)]))
+
+#stereotypy scores for peer:
+stereotypy <- filter_participants %>%
+  select(participant, cue, response, condition) %>%
+  filter(condition == 'peer') %>% 
+  filter(response != "") %>%
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n()) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  arrange(participant, cue, desc(frequency_response)) %>% 
+  group_by(cue) %>% 
+  mutate(stereotypy_score = as.integer(
+    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)])) %>% 
+  select(-condition, -frequency_response)
+
+```
 
 
 
