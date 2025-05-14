@@ -101,7 +101,7 @@ creative_list <- filter_participants %>%
   filter(condition == 'creative') %>% 
   filter(response != "") %>% 
   group_by(participant, cue) %>% 
-  mutate(creative_score = ifelse((response %in% norms_dic$response[cue == norms_dic$cue]), 0, 1))
+  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1))
 
 ```
 
@@ -152,3 +152,16 @@ stereotypy_peer <- filter_participants %>%
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
 The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+
+# Adding in stereotypy and creativity scores for all conditions. 
+Averaging over participants within condition. Plotting average scores to see distribution of averages across conditions.
+
+ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creataive, have creativity as the reference.
+
+
+
+
+
