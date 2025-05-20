@@ -388,4 +388,12 @@ pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condi
 
 
 
+<<<<<<< HEAD
+=======
+ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creataive, have creativity as the reference. 
+
+
+
+
+>>>>>>> 9768a02d5d925979eaa0e7d43ec89ffe813212e1
 
