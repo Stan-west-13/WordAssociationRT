@@ -159,7 +159,7 @@ The preview shows you a rendered HTML copy of the contents of the editor. Conseq
 # Adding in stereotypy and creativity scores for all conditions. 
 Averaging over participants within condition. Plotting average scores to see distribution of averages across conditions.
 
-ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creataive, have creativity as the reference.
+ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creataive, have creativity as the reference. 
 
 
 
