@@ -1,0 +1,325 @@
+---
+title: "Creativity and Stereotypy Scores for Responses - MG"
+output: html_notebook
+---
+
+# Loading in necessary tools and data:
+
+```{r}
+load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(ez)
+
+library(pastecs)
+library(psych)
+library(tidyverse)
+library(rstatix)
+```
+
+I used the code from "NewestData" that makes the data frame "filter_participants" that filters out any extreme values and extreme participants, which will be used to make the "norms_list". The norms list will be used for assigning the creative and stereotypy scores. 
+
+```{r}
+## No paggplot2## No participants are 3SDs outside of their condition's mean. But,
+## some participants may be driving condition means up. 
+combined_meta %>%
+  group_by(condition) %>%
+  reframe(participant = participant,
+            rt = rt,
+            m_cond = mean(rt),
+            sd_cond = sd(rt)) %>%
+  ungroup() %>%
+  group_by(participant) %>%
+  mutate(m_pp = mean(rt),
+         z_pp_cond = (mean(rt)-m_cond)/sd_cond) %>%
+  group_by(condition) %>%
+  reframe(sum(z_pp_cond >= 3))
+
+## Look at extreme responses across all participants.
+filter_responses <- combined_meta %>%
+  mutate(rt = rt *1000) %>%
+  filter(rt > 150) %>%
+  mutate(z_rt = (rt - mean(rt))/sd(rt),.after = rt,
+         is.extreme = ifelse(z_rt >= 3, TRUE,FALSE))
+##  67 and 68 are especially bad
+filter_responses %>%
+  group_by(participant) %>%
+  summarize(sum(is.extreme)) %>%
+  View()
+
+filter_participants <- combined_meta %>%
+  filter(!participant %in% c("TTA_067","TTA_068")) %>%
+  mutate(rt = rt *1000) %>%
+  filter(rt > 150)
+```
+
+# Norms List
+
+I am using the instructions from Fitzpatrick et al. 2013 for this, which is what Playfoot et al. 2016 used. 
+
+Firstly, I need to compile a full list of responses to the cue words and count up how many times each response was given for that cue. Then, I will need to order responses according to their frequency for that cue word, along with a record of that frequency.
+
+I am only concerned with having cues and responses from the peer condition for the norms list. I filter for only rows with the condition 'peer' and I filter out any responses that are blank.
+
+Now, for counting unique responses for that cue, I have to keep in mind that a response could be given for multiple cues (e.q. "fish" is given for both "barracuda" and "salmon"). So, when I mutate a new column to count the amount of unique responses for that given cue, I can't just count how many times that response occurs in the response column; I have to take into account the cue that was being responded to.
+
+So, for group_by, I am grouping by the cue-response pair. I then count the number of rows that exist for that pair with n() and mutate this to the column 'frequency_response'. 
+Now that I've confirmed that this works, I use distinct() to remove duplicate rows.
+
+I ordered the df so that the response with the highest frequency is displayed for each cue.
+
+And voila!!! I have a norms list which has the number of responses made for each cue. 
+
+```{r}
+
+norms_list <- filter_participants %>%
+  select(cue, response, condition) %>%
+  filter(condition == 'peer') %>% 
+  filter(response != "") %>% 
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n()) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  arrange(cue, desc(frequency_response))
+
+norm_dic <- norms_list %>% 
+  select(cue,response)
+
+```
+
+# Creative Scores
+
+For the creative scores, a point is given if the response does not occur for that cue in the norms list. However, the response has to be related to the cue, which was judged by a lab member.
+
+I made a df that only includes the creative condition and takes out any blanks. In Playfoot, the creative scores were only given to the creative condition to compare stereotypy in the peer to creativity in the creative condition. The creative score is used to identify truly creative responses that are associated to the cue.
+
+So, after I filter everything, I group by participant and cue (e.g. TTA_006, salmon). Then, I add a new column to assign the creative scores with a 0 for if the response to that cue in the creative list also occurs in the norms_dic, and a 1 if the response to that cue in the creative list does not occur in the norms_dic. If the response to the cue in the creative list (e.g. fish) is found for any response to the current cue we are on (c(pink, fish, etc) to salmon), then we get a 0. The bit of code at the bottom I am keeping for demonstration purposes only, just so you can see what data frame is being used. 
+
+```{r}
+
+creative_list <- filter_participants %>% 
+  select(participant, cue, response, condition) %>% 
+  filter(condition == 'creative') %>% 
+  filter(response != "") %>% 
+  group_by(participant, cue) %>% 
+  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1))
+
+```
+
+# Stereotypy Scores
+
+There are a couple things that need to happen: 
+
+Firstly, one point is given if a response is the response most commonly given to the cue in the norms list. 
+
+Secondly, if a cue has more than one response that has an equal chance of being given, then a point is awarded for giving either response.
+
+(Third, only data from participants who responded >90% of the time were used.)
+
+I grab each cue, and I want to evaluate what the highest frequency for a response is. Responses equal to that number for a cue get assigned a 1 and if not a 0. So, if a response for a cue is equal to the response for that cue with the highest frequency, assign that row a 1. If not, assign that row a zero. This also accounts for responses to a cue that have an equal number for the frequency_response.
+
+Okay, so that works. Then, I grabbed the code from the norms_list and added the second section of code to it.
+
+```{r}
+
+#this gives me the highest frequency number for each cue.
+norms_list %>% 
+  group_by(cue) %>% 
+  summarise(max(frequency_response))
+
+#as.integer converts TRUE and FALSE to 1 and 0
+norms_list %>% 
+  group_by(cue) %>% 
+  mutate(highest_frequency = as.integer(
+    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)]))
+
+#stereotypy scores for peer:
+stereotypy_peer <- filter_participants %>%
+  select(participant, cue, response, condition) %>%
+  filter(condition == 'peer') %>% 
+  filter(response != "") %>%
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n()) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  arrange(participant, cue, desc(frequency_response)) %>% 
+  group_by(cue) %>% 
+  mutate(stereotypy_score = as.integer(
+    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)])) %>% 
+  select(-condition, -frequency_response)
+
+```
+
+# Stereotypy and Creativity Scores for All Conditions 
+
+Averaging over participants within condition. Plotting average scores to see distribution of averages across conditions.
+
+ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creative, have creativity as the reference.
+
+### Creative scores for all conditions
+
+Since we used the peer condition as our reference for what responses to a cue are creative, the peer condition will not have any creative responses (0). 
+
+Every participant will have an average creativity score for all their responses, so I will count the amount of points each participant has accumulated. Since the scores are all 1's and 0's, I can just add all the creative scores equal to 1 and return the value. "creative_count" is the amount of creative responses a participant had. "creative_proportion" is the proportion of responses given that were creative (e.g. 20% (0.2) of the responses given by TTA_001 were creative)
+
+```{r}
+
+creative_all <- filter_participants %>% 
+  filter(response != "") %>% 
+  group_by(participant, cue) %>% 
+  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1),
+         .after = response) %>% 
+  ungroup() %>% 
+  # this adds the count of creative responses per participant
+  group_by(participant) %>% 
+  mutate(creative_count = sum(as.integer(creative_score == 1)), .after = response) %>% 
+  #this adds the proportion of creative responses per participant
+  mutate(creative_proportion = creative_count/60, .after = creative_count)
+  select(c(-cue_onset:-key, -response.start, -response.stop))
+
+# Count of creative scores for all conditions with peer as reference
+creative_all %>% 
+  group_by(participant, condition) %>% 
+  count(creative_score)
+
+# Average creativity for each participant 
+creative_all %>% 
+  group_by(participant) %>% 
+  filter(creative_score == 1) %>% 
+  count(creative_score)
+
+```
+
+Here I am looking at the mean and sd for creative score and proportion, their plots, an ANOVA, and it's post-hoc. 
+
+```{r}
+
+# Mean and SD for average count and proportion creative for each condition
+creative_all %>% 
+  group_by(condition) %>% 
+  get_summary_stats(creative_count, type = "mean_sd")
+
+creative_all %>% 
+  group_by(condition) %>% 
+  get_summary_stats(creative_proportion, type = "mean_sd")
+
+# Plots for average count and proportion creative for each condition 
+ggplot(creative_all, aes(x = condition, y = creative_count, fill = condition)) + 
+  stat_summary(aes(y = creative_count), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+ggplot(creative_all, aes(x = condition, y = creative_proportion, fill = condition)) + 
+  stat_summary(aes(y = creative_proportion), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+# ANOVA's for creative count and proportion
+c_count_model <- ezANOVA(data = creative_all,
+                         dv = creative_count,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+c_count_model
+
+pairwise.t.test(creative_all$creative_count, creative_all$condition, paired = FALSE)
+
+c_proportion_model <- ezANOVA(data = creative_all,
+                         dv = creative_proportion,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+c_proportion_model
+
+pairwise.t.test(creative_all$creative_proportion, creative_all$condition, paired = FALSE)
+
+```
+
+### Stereotypy scores for all conditions 
+
+```{r}
+
+stereotypy_all <- filter_participants %>%
+  filter(response != "") %>%
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n(), .after = response) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  arrange(participant, cue, desc(frequency_response)) %>% 
+  group_by(cue) %>% 
+  mutate(stereotypy_score = as.integer(
+    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)]), 
+    .after = response) %>% 
+  ungroup() %>% 
+  # this adds the count of stereotypical responses per participant
+  group_by(participant) %>% 
+  mutate(stereotypy_count = sum(as.integer(stereotypy_score == 1)), .after = response) %>% 
+  #this adds the proportion of stereotypical responses per participant
+  mutate(stereotypy_proportion = stereotypy_count/60, .after = stereotypy_count) %>% 
+  select(c(-cue_onset:-key, -response.start, -response.stop))
+
+# Counting how many stereotypical responses for each condition
+stereotypy_all %>% 
+  group_by(condition) %>% 
+  count(stereotypy_score)
+
+# Average stereotypy for each participant
+stereotypy_all %>% 
+  group_by(participant, condition) %>% 
+  filter(stereotypy_score == 1) %>% 
+  count(stereotypy_score)
+
+```
+
+Here I am looking at the mean and sd for stereotypy score and proportion, their plots, an ANOVA, and it's post-hoc.
+
+```{r}
+
+# Mean and SD for average count and proportion stereotypy for each condition
+stereotypy_all %>% 
+  group_by(condition) %>% 
+  get_summary_stats(stereotypy_count, type = "mean_sd")
+
+stereotypy_all %>% 
+  group_by(condition) %>% 
+  get_summary_stats(stereotypy_proportion, type = "mean_sd")
+
+# Plots for average count and proportion stereotypy for each condition 
+ggplot(stereotypy_all, aes(x = condition, y = stereotypy_count, fill = condition)) + 
+  stat_summary(aes(y = stereotypy_count), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+ggplot(stereotypy_all, aes(x = condition, y = stereotypy_proportion, fill = condition)) + 
+  stat_summary(aes(y = stereotypy_proportion), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+# ANOVA's for stereotypy count and proportion
+s_count_model <- ezANOVA(data = stereotypy_all,
+                         dv = stereotypy_count,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+s_count_model
+
+pairwise.t.test(stereotypy_all$stereotypy_count, stereotypy_all$condition, paired = FALSE)
+
+s_proportion_model <- ezANOVA(data = stereotypy_all,
+                         dv = stereotypy_proportion,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+s_proportion_model
+
+pairwise.t.test(stereotypy_all$stereotypy_proportion, stereotypy_all$condition, paired = FALSE)
+
+```
+
+
+
+ANOVA 1-way between-condition for stereotypy and creativity scores. When doing stereotypy, have peer group as reference. For creataive, have creativity as the reference. 
+
+
+
+
+
