@@ -5,7 +5,10 @@ library(purrr)
 library(ggplot2)
 library(ez)
 
-library(pastecs); library(psych); library(tidyverse); library(rstatix)
+library(pastecs)
+library(psych)
+library(tidyverse)
+library(rstatix)
 
 
 ## Running count by condition
