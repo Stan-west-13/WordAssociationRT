@@ -163,9 +163,7 @@ ANOVA 1-way between-condition for stereotypy and creativity scores. When doing s
 
 Since we used the peer condition as our reference for what responses to a cue are creative, the peer condition will not have any creative responses (0). 
 
-Every participant will have an average creativity score for all their responses, so I will count the amount of points each participant has accumulated. Since the scores are all 1's and 0's, I can just add all the creative scores equal to 1 and return the value. "creative_count" is the amount of creative responses a participant had. "creative_proportion" is the proportion of responses given that were creative (e.g. 20% (0.2) of the responses given by TTA_001 were creative).
-
-I've realized that the analytical results I may be getting may be counting all the instances of the average for that participant is it is repeated for every row the participant has. I am going to investigate this by making another df with only the participant, condition, count, and proportion.
+Every participant will have an average creativity score for all their responses, so I will count the amount of points each participant has accumulated. Since the scores are all 1's and 0's, I can just add all the creative scores for that participant and return the value. "creative_count" is the amount of creative responses a participant had. "creative_proportion" is the proportion of responses given that were creative (e.g. 20% (0.2) of the responses given by TTA_001 were creative).
 
 ??Also, if the total number of trials for each participant is different, the proportion needs to account for that. It is changed for now to get the proportion of number of creative or stereotypy responses divided by that participants total number of responses, not 60. I can change it back if needed.
 
@@ -261,7 +259,7 @@ stereotypy_all %>%
 
 ```
 
-Here I am looking at the mean and sd for stereotypy score and proportion, their plots, an ANOVA, and it's post-hoc.
+Here I am looking at the mean and sd for stereotypy score, their plots, an ANOVA, and it's post-hoc.
 
 ```{r}
 
@@ -287,7 +285,9 @@ pairwise.t.test(stereotypy_all$stereotypy_score, stereotypy_all$condition, paire
 
 ```
 
-### Average creative count and proportion for each participant per condition (need to fix)
+### Average creative count and proportion for each participant per condition
+
+"csonly" stands for creative score only
 
 ```{r}
 
@@ -295,6 +295,8 @@ pairwise.t.test(stereotypy_all$stereotypy_score, stereotypy_all$condition, paire
 creative_csonly <- creative_all %>% 
   select(c(participant, condition, creative_count, creative_proportion)) %>% 
   distinct() 
+
+creative_csonly$condition = factor(creative_csonly$condition)
 
 # Mean and SD for average count and proportion creative for each condition
 creative_csonly %>% 
@@ -324,6 +326,14 @@ c_count_model
 
 pairwise.t.test(creative_csonly$creative_count, creative_csonly$condition, paired = FALSE)
 
+# LM for creative count
+## re-leveling factor vector 
+creative_csonly$condition <- relevel(creative_csonly$condition, ref = 2)
+
+c_count_lm <- lm(formula = creative_count ~ condition, data = creative_csonly)
+
+summary(c_count_lm)
+
 # ANOVA and pairwise for creative proportion
 c_proportion_model <- ezANOVA(data = creative_csonly,
                          dv = creative_proportion,
@@ -333,6 +343,13 @@ c_proportion_model <- ezANOVA(data = creative_csonly,
 c_proportion_model
 
 pairwise.t.test(creative_csonly$creative_proportion, creative_csonly$condition, paired = FALSE)
+
+#LM for creative proportion
+creative_csonly$condition <- relevel(creative_csonly$condition, ref = 2)
+
+c_proportion_lm <- lm(formula = creative_proportion ~ condition, data = creative_csonly)
+
+summary(c_proportion_lm)
 
 ```
 
@@ -344,6 +361,9 @@ pairwise.t.test(creative_csonly$creative_proportion, creative_csonly$condition, 
 stereotypy_ssonly <- stereotypy_all %>% 
   select(c(participant, condition, stereotypy_count, stereotypy_proportion)) %>% 
   distinct() 
+
+stereotypy_ssonly$condition = factor(stereotypy_ssonly$condition)
+stereotypy_ssonly$participant = factor(stereotypy_ssonly$participant)
 
 View(stereotypy_ssonly)
 
@@ -365,7 +385,7 @@ ggplot(stereotypy_ssonly, aes(x = condition, y = stereotypy_proportion, fill = c
   stat_summary(aes(y = stereotypy_proportion), fun = "mean", geom = "bar") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
-# ANOVA's for stereotypy count and proportion
+# ANOVA's for stereotypy count
 s_count_model <- ezANOVA(data = stereotypy_ssonly,
                          dv = stereotypy_count,
                          wid = participant,
@@ -375,6 +395,15 @@ s_count_model
 
 pairwise.t.test(stereotypy_all$stereotypy_count, stereotypy_all$condition, paired = FALSE)
 
+# LM for stereotypy count
+## re-leveling factor vector 
+stereotypy_ssonly$condition <- relevel(stereotypy_ssonly$condition, ref = 3)
+
+s_count_lm <- lm(formula = stereotypy_count ~ condition, data = stereotypy_ssonly)
+
+summary(s_count_lm)
+
+# ANOVA for stereotypy proportion 
 s_proportion_model <- ezANOVA(data = stereotypy_ssonly,
                          dv = stereotypy_proportion,
                          wid = participant,
@@ -383,6 +412,8 @@ s_proportion_model <- ezANOVA(data = stereotypy_ssonly,
 s_proportion_model
 
 pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condition, paired = FALSE)
+
+
 
 ```
 
