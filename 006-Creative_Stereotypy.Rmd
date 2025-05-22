@@ -81,6 +81,8 @@ norms_list <- filter_participants %>%
   filter(response != "") %>% 
   group_by(cue, response) %>% 
   mutate(frequency_response = n()) %>% 
+  group_by(cue) %>% 
+  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
   distinct() %>% 
   ungroup() %>% 
   arrange(cue, desc(frequency_response))
@@ -170,17 +172,24 @@ Every participant will have an average creativity score for all their responses,
 ```{r}
 
 creative_all <- filter_participants %>% 
-  filter(response != "") %>% 
+  filter(response != "") %>%
+  group_by(cue, response) %>% 
+  mutate(frequency_response = n(), .after = response) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  arrange(participant, cue, desc(frequency_response)) %>%
   group_by(participant, cue) %>% 
   mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1),
+         .after = response) %>% 
+  mutate(c_score_peer = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]) & (frequency_response == 1), 1, 0),
          .after = response) %>% 
   ungroup() %>% 
   # this adds the count of creative responses per participant
   group_by(participant) %>% 
-  mutate(creative_count = sum(as.integer(creative_score == 1)), .after = response) %>% 
-  mutate(response_count = n(), .after = response) %>% 
+  mutate(creative_count = ifelse(condition == "peer", sum(as.integer(c_score_peer)), sum(as.integer(creative_score))), .after = response) %>% 
   #this adds the proportion of creative responses per participant
-  mutate(creative_proportion = creative_count/response_count, .after = creative_count)
+  mutate(creative_proportion = creative_count/60, .after = creative_count) %>% 
+  ungroup() %>% 
   select(c(-cue_onset:-key, -response.start, -response.stop))
 
 # Count of creative scores for all conditions with peer as reference
@@ -235,15 +244,14 @@ stereotypy_all <- filter_participants %>%
   arrange(participant, cue, desc(frequency_response)) %>% 
   group_by(cue) %>% 
   mutate(stereotypy_score = as.integer(
-    response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)]), 
+    response %in% norms_list$response[norms_list$max_response== TRUE & norms_list$cue %in% cue]), 
     .after = response) %>% 
   ungroup() %>% 
   # this adds the count of stereotypical responses per participant
   group_by(participant) %>% 
   mutate(stereotypy_count = sum(as.integer(stereotypy_score == 1)), .after = response) %>% 
-  mutate(response_count = n(), .after = response) %>% 
   #this adds the proportion of stereotypical responses per participant
-  mutate(stereotypy_proportion = stereotypy_count/response_count, .after = stereotypy_count) %>% 
+  mutate(stereotypy_proportion = stereotypy_count/60, .after = stereotypy_count) %>% 
   select(c(-cue_onset:-key, -response.start, -response.stop))
 
 # Counting how many stereotypical responses for each condition
@@ -316,7 +324,7 @@ ggplot(creative_csonly, aes(x = condition, y = creative_proportion, fill = condi
   stat_summary(aes(y = creative_proportion), fun = "mean", geom = "bar") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
-# ANOVA and pairwise for creative count
+# --ANOVA and pairwise for creative count
 c_count_model <- ezANOVA(data = creative_csonly,
                          dv = creative_count,
                          wid = participant,
@@ -324,7 +332,7 @@ c_count_model <- ezANOVA(data = creative_csonly,
                          detailed = TRUE)
 c_count_model
 
-pairwise.t.test(creative_csonly$creative_count, creative_csonly$condition, paired = FALSE)
+pairwise_t_test(creative_count ~ condition, data = creative_csonly %>% ungroup(), paired = FALSE, detailed = TRUE)
 
 # LM for creative count
 ## re-leveling factor vector 
@@ -350,6 +358,8 @@ creative_csonly$condition <- relevel(creative_csonly$condition, ref = 2)
 c_proportion_lm <- lm(formula = creative_proportion ~ condition, data = creative_csonly)
 
 summary(c_proportion_lm)
+
+t.test(creative_csonly$creative_proportion[creative_csonly$condition == "peer"], creative_csonly$creative_proportion[creative_csonly$condition == "creative"])
 
 ```
 
@@ -412,9 +422,6 @@ s_proportion_model <- ezANOVA(data = stereotypy_ssonly,
 s_proportion_model
 
 pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condition, paired = FALSE)
-
-
-
 ```
 
 
