@@ -16,7 +16,7 @@ filter_participants <- d %>%
 
 
 ## Filter out responses faster than 250ms and responses that are more than 
-## 2.5 standard deviations away from participant mean ########################
+## 2.5 standard deviations away from participant mean. Also get rid of non-responses ########################
 filter_participants_psychling <- filter_participants |>
   filter(rt > 250) |>
   filter(!Nletters == 0) |>
