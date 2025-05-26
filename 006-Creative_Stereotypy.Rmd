@@ -332,6 +332,8 @@ c_count_model <- ezANOVA(data = creative_csonly,
                          detailed = TRUE)
 c_count_model
 
+pairwise.t.test(creative_csonly$creative_count, creative_csonly$condition, paired = FALSE)
+
 pairwise_t_test(creative_count ~ condition, data = creative_csonly %>% ungroup(), paired = FALSE, detailed = TRUE)
 
 # LM for creative count
