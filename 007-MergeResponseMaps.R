@@ -2,11 +2,52 @@ library(RSQLite)
 library(dplyr)
 library(tidyverse)
 library(readxl)
-load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
-psychling <- read_xlsx("psychling/13428_2018_1077_MOESM2_ESM.xlsx")
-dbListTables(con)
 
+map_revisions_psychling <- function(orig_df, revision_df){
+  for (i in 1:nrow(orig_df)){
+    resp <- orig_df$response[i]
+    if (is.na(orig_df$aoa[i]) & !is.na(orig_df$revision[i])){
+      orig_df$aoa[i] <- unique(revision_df$aoa[revision_df$response == resp])
+    }
+    if (is.na(orig_df$Lg10CD[i]) & !is.na(orig_df$revision[i])){
+      orig_df$Lg10CD[i] <- unique(revision_df$Lg10CD[revision_df$response == resp])
+    }
+    if (is.na(orig_df$Lg10WF[i]) & !is.na(orig_df$revision[i])){
+      orig_df$Lg10WF[i] <- unique(revision_df$Lg10WF[revision_df$response == resp])
+    }
+    if (!is.na(orig_df$revision[i])){
+      orig_df$Nletters[i] <- str_count(orig_df$revision[i])
+    }
+    else if (is.na(orig_df$revision[i])){
+      orig_df$Nletters[i] <- str_count(orig_df$response[i])
+    }
+    if (is.na(orig_df$Nphon[i]) & !is.na(orig_df$revision[i])){
+      orig_df$Nphon[i] <- unique(revision_df$Nphon[revision_df$response == resp])
+    }
+    if (is.na(orig_df$Nsyll[i]) & !is.na(orig_df$revision[i])){
+      orig_df$Nsyll[i] <- unique(revision_df$Nsyll[revision_df$response == resp])
+    }
+    else
+      orig_df$aoa[i] <- orig_df$aoa[i]
+      orig_df$Lg10WF[i] <- orig_df$Lg10WF[i]
+      orig_df$Lg10CD[i] <- orig_df$Lg10CD[i]
+      orig_df$Nphon[i] <- orig_df$Nphon[i]
+      orig_df$Nsyll[i] <- orig_df$Nsyll[i]
+  }
+  return(orig_df)
+}
+
+## Load in data##################################################
+load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
+combined_meta$aoa <- combined_meta$AoA_Kup_lem
+psychling <- read.csv("psychling/AoA_51715_words.csv")
+
+
+#################################################################
+
+## Conncect to database and pull relevant tables ################
 con <- dbConnect(RSQLite::SQLite(), "Word-AssociationRT_mapped.db")
+dbListTables(con)
 
 response_maps <- dbGetQuery(conn = con,"SELECT *
                              FROM response_map")
@@ -25,8 +66,13 @@ kup <- dbGetQuery(conn = con,"SELECT *
 
 sub <- dbGetQuery(conn = con,"SELECT *
                              FROM subtlex")
+#############################################
 
+## Disconnect 
+dbDisconnect(conn = con)
+#################
 
+## Join cues, responses, revisions, and mapped psycholinguistic variabiles
 response_revisions <- cues_responses %>%
   left_join(cues, by = c("cue_id" = "id")) %>%
   left_join(responses, by = c("response_id" = "id")) %>%
@@ -36,36 +82,37 @@ response_revisions <- cues_responses %>%
   left_join(sub %>% select(-word), by = c("subtlex_id" = "id")) %>%
   select(cue,response,revision,aoa,Lg10WF,Lg10CD) %>%
   unique()
+####################################################################
 
-response_psychling <- response_revisions %>%
-  select(response,revision,aoa,Lg10WF,Lg10CD) %>%
-  unique() %>%
-  filter(!is.na(aoa) & !is.na(Lg10WF) & !is.na(Lg10CD)) %>%
-  left_join(unique(select(combined_meta, response,Nletters,Nphon, Nsyll)), by = c("revision" = "response" )) %>%
-  mutate(response = ifelse(is.na(revision),response,revision)) %>%
-  unique()
+## Make dataframe of cues,responses, and revisions to translate to original dataframe
+response_revisions_only <- response_revisions %>%
+  filter(!is.na(revision), !revision == "") %>%
+  left_join(psychling %>% select(Word,Nletters,Nphon,Nsyll), by = c("revision" = "Word"))
+################################################################################
 
-response_psychling$response <- ifelse(is.na(response_psychling$revision),response_psychling$response,response_psychling$revision)
+## Join revisions to original dataframe ############################
+combined_meta_revisions <- combined_meta %>%
+  left_join(select(response_revisions_only,cue,response,revision), by = c("cue","response"))
+#############################################################################
 
-combined_meta_mapped <- combined_meta %>%
-  select(-Lg10WF,-Lg10CD) %>%
-  left_join(response_psychling %>% select(response,
-                                          revision,
-                                          aoa,
-                                          Lg10WF,
-                                          Lg10CD), by = "response") %>%
+
+## Run function to replace aoa, Lg10WF, and Lg10CD with values from revised and mapped
+## dataframe.
+meta_mapped <- map_revisions_psychling(combined_meta_revisions,response_revisions_only)
+##############################################################
+
+## Reorganize and select relevant columns
+combined_meta_mapped <- meta_mapped %>%
   select(participant,cue,strength_strat,type,response,revision,aoa,Lg10WF,Lg10CD,Nletters,Nphon,Nsyll,rt,condition,
          runningclock,cue_onset,cue_offset,key,response.start,response.stop,
          FREQcount,CDcount,FREQlow,Cdlow,SUBTLWF,SUBTLCD,Alternative.spelling,Freq_pm,Dom_PoS_SUBTLEX,
          Lemma_highest_PoS, AoA_Kup, Perc_known,Concreteness_mean,AoAinv_mean,Pknown_mean,nlettersinv_mean,R1_max,
          date,expName,psychopyVersion,frameRate,expStart,Nobs,Prevalence,FreqZipfUS)
 
-combined_meta_mapped[!is.na(combined_meta_mapped$revision)]
-
-
-combined_meta_mapped %>%
-  select(cue,response,revision,aoa,AoA_Kup_lem,Lg10WF.x,Lg10CD.x,Lg10WF.y,Lg10CD.y) %>%
-  View()
+ 
+## Save out data #####################
+write_rds(combined_meta_mapped, file = paste0("psychling/mapped_response_metadata_",Sys.Date(),".rds"))
+###################
 
 
 
