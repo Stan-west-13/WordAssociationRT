@@ -20,7 +20,7 @@ library(tidyverse)
 library(rstatix)
 ```
 
-I used the code from "NewestData" that makes the data frame "filter_participants" that filters out any extreme values and extreme participants, which will be used to make the "norms_list". The norms list will be used for assigning the creative and stereotypy scores. 
+I used the code from "008-PsycholinguisticAnalysis" to make the data frame "filter_participants" that filters out any extreme values and extreme participants, which will be used to make the "norms_list". The norms list will be used for assigning the creative and stereotypy scores. 
 
 ```{r}
 ## Filter out responses faster than 250ms and responses that are more than 
@@ -61,22 +61,61 @@ I ordered the df so that the response with the highest frequency is displayed fo
 
 And voila!!! I have a norms list which has the number of responses made for each cue. 
 
+#### 5/27/25 Edit:
+I have added new columns to account for the revisions made. I have kept the original columns for comparision for how things have changed with the revisions. 
+
+There is now a corrected_response column that replaces any response that was corrected with it's revision. This column will pretty much act as the response column has for the previous code. I have adapted the previous code to do what it has done with the uncorrected responses, but have assigned it to columns that have "corrected" in them.
+
+
 ```{r}
 
-norms_list <- filter_participants %>%
-  select(cue, response, condition) %>%
+filter_participants_corrected <- filter_participants %>%
+  mutate(corrected_response = ifelse((is.na(revision) != TRUE) & revision != "", revision, response),
+         .after = revision)
+  
+
+norms_list <- filter_participants_corrected %>%
+  select(condition, cue, response, revision, corrected_response) %>%
   filter(condition == 'peer') %>% 
-  filter(response != "") %>% 
+  filter(response != "") %>%
+  filter(response != "notsure", response != "idk") %>% 
+  filter(!is.na(response)) %>% 
   group_by(cue, response) %>% 
-  mutate(frequency_response = n()) %>% 
+  mutate(frequency_response = n()) %>%
+  ungroup() %>% 
   group_by(cue) %>% 
   mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
+  ungroup() %>%
+  group_by(cue, corrected_response) %>% 
+  mutate(frequency_corrected = n()) %>% 
+  ungroup %>% 
+  group_by(cue) %>% 
+  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
+  ungroup() %>% 
+  distinct() %>% 
+  arrange(cue, desc(frequency_response), desc(frequency_corrected))
+
+# used for sanity check for norms_list
+norms_list_corrected <- filter_participants %>%
+  select(condition, cue, response, revision) %>%
+  filter(condition == 'peer') %>% 
+  filter(response != "") %>%
+  filter(response != "notsure", response != "idk") %>% 
+  filter(!is.na(response)) %>% 
+  mutate(corrected_response = ifelse((is.na(revision) != TRUE) & revision != "", revision, response), 
+         .after = revision) %>%
+  group_by(cue, corrected_response) %>% 
+  mutate(frequency_corrected = n()) %>% 
   distinct() %>% 
   ungroup() %>% 
-  arrange(cue, desc(frequency_response))
+  arrange(cue, desc(frequency_corrected))
 
 norm_dic <- norms_list %>% 
   select(cue,response)
+
+norm_dic_corrected <- norms_list %>% 
+  select(cue, corrected_response, frequency_corrected) %>% 
+  distinct()
 
 ```
 
@@ -90,13 +129,17 @@ So, after I filter everything, I group by participant and cue (e.g. TTA_006, sal
 
 ```{r}
 
-creative_list <- filter_participants %>% 
-  select(participant, cue, response, condition) %>% 
+creative_list <- filter_participants_corrected %>% 
+  select(condition, participant, cue, response, corrected_response) %>% 
   filter(condition == 'creative') %>% 
   filter(response != "") %>% 
   group_by(participant, cue) %>% 
-  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1))
-
+  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1)) %>% 
+  mutate(creative_score_corrected = ifelse(corrected_response %in% 
+                                             norm_dic_corrected$corrected_response[cue == norm_dic_corrected$cue],
+                                           0,1)) %>% 
+  arrange(cue)
+  
 ```
 
 # Stereotypy Scores
