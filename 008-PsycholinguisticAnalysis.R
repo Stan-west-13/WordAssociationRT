@@ -43,8 +43,42 @@ ggplot(plot_df, aes(x = condition, y = value))+
   facet_wrap(~measure,scales = 'free')
 
 
+## Psychling analyses
+cue_averages <- filter_participants_psychling %>%
+  group_by(cue, condition) %>%
+  summarize(across(c(Lg10WF, Lg10CD, aoa, Nletters, Nsyll), function(x) mean(x, na.rm = TRUE))) %>%
+  ungroup() 
 
 
 
+dependent_variables <- c("Lg10WF", "Lg10CD", "aoa", "Nletters", "Nsyll")
+names(dependent_variables) <- dependent_variables
+posthoc_contrasts <- list(pc = c("child", "peer"),
+                          cs = c("child", "short"),
+                          ps = c("peer", "short"), 
+                          crc = c("creative", "child"),
+                          crp = c("creative","peer"),
+                          crs = c("creative", "short"))
 
+anovas <- map(dependent_variables, function(dv) {
+  list(
+    full_model = eval(substitute(
+      ezANOVA(
+        data = cue_averages,
+        dv = .dv,
+        wid = cue,
+        between = condition
+      ), list(.dv = dv))),
+    posthocs = map(posthoc_contrasts, function(ph_contr, dv) {
+      eval(substitute(ezANOVA(
+        data = cue_averages %>%
+          filter(condition %in% ph_contr) %>%
+          droplevels(),
+        dv = .dv,
+        wid = cue,
+        between = condition
+      ), list(.dv = dv)))
+    }, dv = dv)
+  )
+})
 
