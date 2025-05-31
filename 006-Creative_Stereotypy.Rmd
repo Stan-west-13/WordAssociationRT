@@ -297,21 +297,26 @@ pairwise.t.test(creative_all$creative_score, creative_all$condition, paired = FA
 
 ```{r}
 
-stereotypy_all <- filter_participants %>%
+stereotypy_all <- filter_participants_corrected %>%
   filter(response != "") %>%
   group_by(cue, response) %>% 
   mutate(frequency_response = n(), .after = response) %>% 
-  distinct() %>% 
   ungroup() %>% 
   arrange(participant, cue, desc(frequency_response)) %>% 
   group_by(cue) %>% 
   mutate(stereotypy_score = as.integer(
     response %in% norms_list$response[norms_list$max_response== TRUE & norms_list$cue %in% cue]), 
-    .after = response) %>% 
+    .after = response) %>%
+  mutate(stereotypy_score_corrected = as.integer(
+    corrected_response %in% norms_list$corrected_response[norms_list$max_corrected== TRUE & 
+                                                            norms_list$cue %in% cue]),
+    .after = corrected_response) %>% 
   ungroup() %>% 
   # this adds the count of stereotypical responses per participant
   group_by(participant) %>% 
-  mutate(stereotypy_count = sum(as.integer(stereotypy_score == 1)), .after = response) %>% 
+  mutate(stereotypy_count = sum(as.integer(stereotypy_score == 1)), .after = response) %>%
+  mutate(stereotypy_count_corrected = sum(as.integer(stereotypy_score_corrected == 1)), 
+         .after = corrected_response) %>% 
   #this adds the proportion of stereotypical responses per participant
   mutate(stereotypy_proportion = stereotypy_count/60, .after = stereotypy_count) %>% 
   select(c(-cue_onset:-key, -response.start, -response.stop))
@@ -461,10 +466,12 @@ stereotypy_ssonly <- stereotypy_all %>%
   select(c(participant, condition, stereotypy_count, stereotypy_proportion)) %>% 
   distinct() 
 
+stereotypy_ssonly_corrected <- stereotypy_all %>% 
+  select(c(participant, condition, stereotypy_count_corrected)) %>% 
+  distinct()
+
 stereotypy_ssonly$condition = factor(stereotypy_ssonly$condition)
 stereotypy_ssonly$participant = factor(stereotypy_ssonly$participant)
-
-View(stereotypy_ssonly)
 
 # Mean and SD for average count and proportion stereotypy for each condition
 stereotypy_ssonly %>% 
@@ -484,6 +491,11 @@ ggplot(stereotypy_ssonly, aes(x = condition, y = stereotypy_proportion, fill = c
   stat_summary(aes(y = stereotypy_proportion), fun = "mean", geom = "bar") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
+# Plot for average corrected stereotypy count for each condition
+ggplot(stereotypy_ssonly_corrected, aes(x = condition, y = stereotypy_count_corrected, fill = condition)) + 
+  stat_summary(aes(y = stereotypy_count_corrected), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
 # ANOVA's for stereotypy count
 s_count_model <- ezANOVA(data = stereotypy_ssonly,
                          dv = stereotypy_count,
@@ -492,7 +504,17 @@ s_count_model <- ezANOVA(data = stereotypy_ssonly,
                          detailed = TRUE)
 s_count_model
 
-pairwise.t.test(stereotypy_all$stereotypy_count, stereotypy_all$condition, paired = FALSE)
+pairwise.t.test(stereotypy_ssonly$stereotypy_count, stereotypy_ssonly$condition, paired = FALSE)
+
+# ANOVA for stereotypy count corrected
+s_count_model_corrected <- ezANOVA(data = stereotypy_ssonly_corrected,
+                         dv = stereotypy_count_corrected,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+s_count_model_corrected
+
+pairwise.t.test(stereotypy_ssonly_corrected$stereotypy_count_corrected, stereotypy_ssonly_corrected$condition, paired = FALSE)
 
 # LM for stereotypy count
 ## re-leveling factor vector 
@@ -511,6 +533,7 @@ s_proportion_model <- ezANOVA(data = stereotypy_ssonly,
 s_proportion_model
 
 pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condition, paired = FALSE)
+
 ```
 
 
