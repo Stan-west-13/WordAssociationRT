@@ -237,11 +237,10 @@ creative_all <- filter_participants_corrected %>%
   mutate(creative_score_corrected = ifelse(corrected_response %in% 
                                              norm_dic_corrected$corrected_response[cue == norm_dic_corrected$cue],
                                            0,1),.after = corrected_response) %>% 
-  mutate(c_score_peer = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]) & (frequency_response == 1), 
+  mutate(c_score_peer = ifelse((response %in% norm_dic$response[(cue == norm_dic$cue) & 
+                                                                  (norm_dic$frequency_response ==1)]),
                                1, 0),.after = response) %>%
-  mutate(c_score_peer_corrected = ifelse((response %in% 
-                                            norm_dic_corrected$corrected_response[cue == norm_dic_corrected$cue])
-                                         & (frequency_corrected == 1), 1, 0), .after = corrected_response) %>% 
+  mutate(c_score_peer_corrected = ifelse((corrected_response %in% norm_dic_corrected$corrected_response[(cue == norm_dic_corrected$cue) & (norm_dic_corrected$frequency_corrected ==1)]), 1, 0), .after = corrected_response) %>% 
   ungroup() %>% 
   # this adds the count of creative responses per participant
   group_by(participant) %>% 
