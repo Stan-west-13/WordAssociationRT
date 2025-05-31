@@ -48,69 +48,41 @@ plot_df %>%
   group_by(condition, measure) %>% 
   get_summary_stats(value, type = "common")
 
-## ANOVA
-### since we don't have multiple responses, do I use a between subjects ANOVA
 
-#average over cues in each condition, then within cue between conditions ANOVA; pairwise differences between conditions in context of ANOVA 
+## Analysis
 
-temp <- filter_participants_psychling %>% 
-  drop_na(Nletters)
+cue_averages <- filter_participants_psychling %>%
+  group_by(cue, condition) %>%
+  summarize(across(c(Lg10WF, Lg10CD, aoa, Nletters, Nsyll), function(x) mean(x, na.rm = TRUE))) %>%
+  ungroup()
 
-aoa_model <- ezANOVA(data = temp,
-                     dv = aoa,
-                     wid = participant,
-                     between = condition,
-                     detailed = TRUE)
-# error with cells having NA when aggregated to a mean
-aoa_model
+dependent_variables <- c("Lg10WF", "Lg10CD", "aoa", "Nletters", "Nsyll")
+names(dependent_variables) <- dependent_variables
+posthoc_contrasts <- list(pc = c("child", "peer"),
+                          cs = c("child", "short"),
+                          ps = c("peer", "short"), 
+                          crc = c("creative", "child"),
+                          crp = c("creative","peer"),
+                          crs = c("creative", "short"))
 
-pairwise.t.test(temp$aoa, temp$condition, paried = FALSE)
-
-
-cd_model <- ezANOVA(data = temp,
-                     dv = Lg10CD,
-                     wid = participant,
-                     between = condition,
-                     detailed = TRUE)
-# error with cells having NA when aggregated to a mean
-cd_model
-
-pairwise.t.test(temp$Lg10CD, temp$condition, paried = FALSE)
-
-
-wf_model <- ezANOVA(data = temp,
-                     dv = Lg10WF,
-                     wid = participant,
-                     between = condition,
-                     detailed = TRUE)
-# error with cells having NA when aggregated to a mean
-wf_model
-
-pairwise.t.test(temp$Lg10WF, temp$condition, paried = FALSE)
-
-
-#------------
-
-## Number of letters 
-nletters_model <- ezANOVA(data = temp,
-                     dv = Nletters,
-                     wid = participant,
-                     between = condition,
-                     detailed = TRUE)
-# error with cells having NA when aggregated to a mean
-nletters_model
-
-pairwise.t.test(temp$Nletters, temp$condition, paried = FALSE)
-
-
-#------------
-
-nsyll_model <- ezANOVA(data = temp,
-                     dv = Nsyll,
-                     wid = participant,
-                     between = condition,
-                     detailed = TRUE)
-# error with cells having NA when aggregated to a mean
-nsyll_model
-
-pairwise.t.test(temp$Nsyll, temp$condition, paried = FALSE)
+anovas <- map(dependent_variables, function(dv) {
+  list(
+    full_model = eval(substitute(
+      ezANOVA(
+        data = cue_averages,
+        dv = .dv,
+        wid = cue,
+        between = condition
+      ), list(.dv = dv))),
+    posthocs = map(posthoc_contrasts, function(ph_contr, dv) {
+      eval(substitute(ezANOVA(
+        data = cue_averages %>%
+          filter(condition %in% ph_contr) %>%
+          droplevels(),
+        dv = .dv,
+        wid = cue,
+        between = condition
+      ), list(.dv = dv)))
+    }, dv = dv)
+  )
+})

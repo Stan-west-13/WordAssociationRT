@@ -62,23 +62,25 @@ I ordered the df so that the response with the highest frequency is displayed fo
 And voila!!! I have a norms list which has the number of responses made for each cue. 
 
 #### 5/27/25 Edit:
-I have added new columns to account for the revisions made. I have kept the original columns for comparision for how things have changed with the revisions. 
+I have added new columns to account for the revisions made. I have kept the original columns for comparison for how things have changed with the revisions. 
 
 There is now a corrected_response column that replaces any response that was corrected with it's revision. This column will pretty much act as the response column has for the previous code. I have adapted the previous code to do what it has done with the uncorrected responses, but have assigned it to columns that have "corrected" in them.
+
+This works by checking if the revision column contains a correction, and if so, replacing the original response with the correction. The reason why I added a separate column is to keep the original responses the participants made along with the correction made. I also filter out any lingering filler responses people made when they did not know a word. 
 
 
 ```{r}
 
 filter_participants_corrected <- filter_participants %>%
   mutate(corrected_response = ifelse((is.na(revision) != TRUE) & revision != "", revision, response),
-         .after = revision)
+         .after = revision) %>% 
+  filter(response != "") %>%
+  filter(response != "notsure", response != "idk")
   
 
 norms_list <- filter_participants_corrected %>%
   select(condition, cue, response, revision, corrected_response) %>%
   filter(condition == 'peer') %>% 
-  filter(response != "") %>%
-  filter(response != "notsure", response != "idk") %>% 
   filter(!is.na(response)) %>% 
   group_by(cue, response) %>% 
   mutate(frequency_response = n()) %>%
@@ -111,10 +113,10 @@ norms_list_corrected <- filter_participants %>%
   arrange(cue, desc(frequency_corrected))
 
 norm_dic <- norms_list %>% 
-  select(cue,response)
+  select(cue,response, frequency_response, max_response)
 
 norm_dic_corrected <- norms_list %>% 
-  select(cue, corrected_response, frequency_corrected) %>% 
+  select(cue, corrected_response, frequency_corrected, max_corrected) %>% 
   distinct()
 
 ```
@@ -127,12 +129,16 @@ I made a df that only includes the creative condition and takes out any blanks. 
 
 So, after I filter everything, I group by participant and cue (e.g. TTA_006, salmon). Then, I add a new column to assign the creative scores with a 0 for if the response to that cue in the creative list also occurs in the norms_dic, and a 1 if the response to that cue in the creative list does not occur in the norms_dic. If the response to the cue in the creative list (e.g. fish) is found for any response to the current cue we are on (c(pink, fish, etc) to salmon), then we get a 0. The bit of code at the bottom I am keeping for demonstration purposes only, just so you can see what data frame is being used. 
 
+#### 5/27 edit:
+Here, I am implementing the corrected responses into this list and checking that it works before I add it to the data frames used for analysis.
+
 ```{r}
 
 creative_list <- filter_participants_corrected %>% 
   select(condition, participant, cue, response, corrected_response) %>% 
   filter(condition == 'creative') %>% 
   filter(response != "") %>% 
+  filter(response != "notsure", response != "idk", response != "notsre") %>%
   group_by(participant, cue) %>% 
   mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1)) %>% 
   mutate(creative_score_corrected = ifelse(corrected_response %in% 
@@ -162,6 +168,10 @@ Okay, so that works. Then, I grabbed the code from the norms_list and added the 
 norms_list %>% 
   group_by(cue) %>% 
   summarise(max(frequency_response))
+
+norms_list %>% 
+  group_by(cue) %>% 
+  summarise(max(frequency_corrected))
 
 #as.integer converts TRUE and FALSE to 1 and 0
 norms_list %>% 
@@ -194,30 +204,52 @@ ANOVA 1-way between-condition for stereotypy and creativity scores. When doing s
 
 ### Creative scores for all conditions
 
-Since we used the peer condition as our reference for what responses to a cue are creative, the peer condition will not have any creative responses (0). 
+Since we used the peer condition as our reference for what responses to a cue are creative, the peer condition will not have any creative responses by default. However, Stan and I have gone in and changed it so if the response was made in the peer condition and the frequency of the response was 1, to give that response a 1 for being creative. This was reflected in a separate column called "c_score_peer". 
 
 Every participant will have an average creativity score for all their responses, so I will count the amount of points each participant has accumulated. Since the scores are all 1's and 0's, I can just add all the creative scores for that participant and return the value. "creative_count" is the amount of creative responses a participant had. "creative_proportion" is the proportion of responses given that were creative (e.g. 20% (0.2) of the responses given by TTA_001 were creative).
 
-??Also, if the total number of trials for each participant is different, the proportion needs to account for that. It is changed for now to get the proportion of number of creative or stereotypy responses divided by that participants total number of responses, not 60. I can change it back if needed.
+#### Accounting for Revisions
+In order to account for misspelled words being incorrectly reflected as creative, there is a separate series of columns that are "corrected", which means they take into account the revisions made. See the description for how "filter_participants_corrected" was made to see how this is done. 
 
 ```{r}
 
-creative_all <- filter_participants %>% 
+creative_all <- filter_participants_corrected %>% 
   filter(response != "") %>%
   group_by(cue, response) %>% 
-  mutate(frequency_response = n(), .after = response) %>% 
-  distinct() %>% 
+  mutate(frequency_response = n(), .after = response) %>%
   ungroup() %>% 
-  arrange(participant, cue, desc(frequency_response)) %>%
+  group_by(cue) %>% 
+  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE), 
+         .after = frequency_response) %>% 
+  ungroup() %>%
+  group_by(cue, corrected_response) %>% 
+  mutate(frequency_corrected = n(), .after = corrected_response) %>% 
+  ungroup %>% 
+  group_by(cue) %>% 
+  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE), 
+         .after = frequency_corrected) %>%
+  ungroup() %>% 
+  distinct() %>% 
+  arrange(cue, desc(frequency_response), desc(frequency_corrected)) %>% 
   group_by(participant, cue) %>% 
-  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, ifelse(#assess if there is a revision for the response)),
+  mutate(creative_score = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]), 0, 1),
          .after = response) %>% 
-  mutate(c_score_peer = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]) & (frequency_response == 1), 1, 0),
-         .after = response) %>% 
+  mutate(creative_score_corrected = ifelse(corrected_response %in% 
+                                             norm_dic_corrected$corrected_response[cue == norm_dic_corrected$cue],
+                                           0,1),.after = corrected_response) %>% 
+  mutate(c_score_peer = ifelse((response %in% norm_dic$response[cue == norm_dic$cue]) & (frequency_response == 1), 
+                               1, 0),.after = response) %>%
+  mutate(c_score_peer_corrected = ifelse((response %in% 
+                                            norm_dic_corrected$corrected_response[cue == norm_dic_corrected$cue])
+                                         & (frequency_corrected == 1), 1, 0), .after = corrected_response) %>% 
   ungroup() %>% 
   # this adds the count of creative responses per participant
   group_by(participant) %>% 
-  mutate(creative_count = ifelse(condition == "peer", sum(as.integer(c_score_peer)), sum(as.integer(creative_score))), .after = response) %>% 
+  mutate(creative_count = ifelse(condition == "peer", sum(as.integer(c_score_peer)),
+                                 sum(as.integer(creative_score))), .after = response) %>%
+  mutate(creative_count_corrected = ifelse(condition == 'peer', sum(as.integer(c_score_peer_corrected)), 
+                                           sum(as.integer(creative_score_corrected))), 
+         .after = corrected_response) %>% 
   #this adds the proportion of creative responses per participant
   mutate(creative_proportion = creative_count/60, .after = creative_count) %>% 
   ungroup() %>% 
@@ -326,7 +358,7 @@ pairwise.t.test(stereotypy_all$stereotypy_score, stereotypy_all$condition, paire
 
 ### Average creative count and proportion for each participant per condition
 
-"csonly" stands for creative score only
+"csonly" stands for creative score only. The "creative_csonly" data frame only has the unique score of the participant once. This helps with ensuring that the analysis ran is only counting each score once. When using the other data frame, there is an uneven number of observations for each participant, so their score has more/less instances than other participants. 
 
 ```{r}
 
@@ -334,6 +366,10 @@ pairwise.t.test(stereotypy_all$stereotypy_score, stereotypy_all$condition, paire
 creative_csonly <- creative_all %>% 
   select(c(participant, condition, creative_count, creative_proportion)) %>% 
   distinct() 
+
+creative_csonly_corrected <- creative_all %>% 
+  select(c(participant, condition, creative_count_corrected)) %>% 
+  distinct()
 
 creative_csonly$condition = factor(creative_csonly$condition)
 
@@ -346,6 +382,11 @@ creative_csonly %>%
   group_by(condition) %>% 
   get_summary_stats(creative_proportion, type = "mean_sd")
 
+# Mean and SD for average corrected count for each condition
+creative_csonly_corrected %>% 
+  group_by(condition) %>% 
+  get_summary_stats(creative_count_corrected, type = "mean_sd")
+
 # Plots for average count and proportion creative for each condition 
 ggplot(creative_csonly, aes(x = condition, y = creative_count, fill = condition)) + 
   stat_summary(aes(y = creative_count), fun = "mean", geom = "bar") +
@@ -353,6 +394,11 @@ ggplot(creative_csonly, aes(x = condition, y = creative_count, fill = condition)
 
 ggplot(creative_csonly, aes(x = condition, y = creative_proportion, fill = condition)) + 
   stat_summary(aes(y = creative_proportion), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+# Plots for average corrected count for each condition
+ggplot(creative_csonly_corrected, aes(x = condition, y = creative_count_corrected, fill = condition)) + 
+  stat_summary(aes(y = creative_count_corrected), fun = "mean", geom = "bar") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
 # --ANOVA and pairwise for creative count
@@ -366,6 +412,17 @@ c_count_model
 pairwise.t.test(creative_csonly$creative_count, creative_csonly$condition, paired = FALSE)
 
 pairwise_t_test(creative_count ~ condition, data = creative_csonly %>% ungroup(), paired = FALSE, detailed = TRUE)
+
+# -- ANOVA and pairwise for corrected creative count
+c_count_model_corrected <- ezANOVA(data = creative_csonly_corrected,
+                         dv = creative_count_corrected,
+                         wid = participant,
+                         between = condition,
+                         detailed = TRUE)
+c_count_model_corrected
+
+pairwise.t.test(creative_csonly_corrected$creative_count_corrected, creative_csonly_corrected$condition, 
+                paired = FALSE)
 
 # LM for creative count
 ## re-leveling factor vector 
