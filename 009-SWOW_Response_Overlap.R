@@ -32,26 +32,6 @@ filter_participants_corrected <- filter_participants %>%
   filter(response != "") %>%
   filter(response != "notsure", response != "idk")
 
-norms_list <- filter_participants_corrected %>%
-  select(condition, cue, response, revision, corrected_response) %>%
-  filter(condition == 'peer') %>% 
-  filter(!is.na(response)) %>% 
-  group_by(cue, response) %>% 
-  mutate(frequency_response = n()) %>%
-  group_by(cue) %>% 
-  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
-  group_by(cue, corrected_response) %>% 
-  mutate(frequency_corrected = n()) %>% 
-  group_by(cue) %>% 
-  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
-  ungroup() %>% 
-  distinct() %>% 
-  arrange(cue, desc(frequency_response), desc(frequency_corrected))
-
-norm_dic_corrected <- norms_list %>% 
-  select(cue, corrected_response, frequency_corrected, max_corrected) %>% 
-  distinct()
-
 ########################################################
 
 ## Df for TTA 
