@@ -217,14 +217,11 @@ creative_all <- filter_participants_corrected %>%
   filter(response != "") %>%
   group_by(cue, response) %>% 
   mutate(frequency_response = n(), .after = response) %>%
-  ungroup() %>% 
   group_by(cue) %>% 
   mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE), 
          .after = frequency_response) %>% 
-  ungroup() %>%
   group_by(cue, corrected_response) %>% 
   mutate(frequency_corrected = n(), .after = corrected_response) %>% 
-  ungroup %>% 
   group_by(cue) %>% 
   mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE), 
          .after = frequency_corrected) %>%
@@ -241,7 +238,6 @@ creative_all <- filter_participants_corrected %>%
                                                                   (norm_dic$frequency_response ==1)]),
                                1, 0),.after = response) %>%
   mutate(c_score_peer_corrected = ifelse((corrected_response %in% norm_dic_corrected$corrected_response[(cue == norm_dic_corrected$cue) & (norm_dic_corrected$frequency_corrected ==1)]), 1, 0), .after = corrected_response) %>% 
-  ungroup() %>% 
   # this adds the count of creative responses per participant
   group_by(participant) %>% 
   mutate(creative_count = ifelse(condition == "peer", sum(as.integer(c_score_peer)),
@@ -301,7 +297,6 @@ stereotypy_all <- filter_participants_corrected %>%
   filter(response != "") %>%
   group_by(cue, response) %>% 
   mutate(frequency_response = n(), .after = response) %>% 
-  ungroup() %>% 
   arrange(participant, cue, desc(frequency_response)) %>% 
   group_by(cue) %>% 
   mutate(stereotypy_score = as.integer(
@@ -311,7 +306,6 @@ stereotypy_all <- filter_participants_corrected %>%
     corrected_response %in% norms_list$corrected_response[norms_list$max_corrected== TRUE & 
                                                             norms_list$cue %in% cue]),
     .after = corrected_response) %>% 
-  ungroup() %>% 
   # this adds the count of stereotypical responses per participant
   group_by(participant) %>% 
   mutate(stereotypy_count = sum(as.integer(stereotypy_score == 1)), .after = response) %>%
@@ -477,6 +471,10 @@ stereotypy_ssonly$participant = factor(stereotypy_ssonly$participant)
 stereotypy_ssonly %>% 
   group_by(condition) %>% 
   get_summary_stats(stereotypy_count, type = "mean_sd")
+
+stereotypy_ssonly_corrected %>% 
+  group_by(condition) %>% 
+  get_summary_stats(stereotypy_count_corrected, type = "mean_sd")
 
 stereotypy_ssonly %>% 
   group_by(condition) %>% 
