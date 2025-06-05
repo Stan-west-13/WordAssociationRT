@@ -47,13 +47,13 @@ tta_df <- filter_participants_corrected %>%
   group_by(cue) %>% 
   mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
   ungroup() %>% 
-  distinct() %>% 
+  #distinct() %>% 
   arrange(cue, desc(frequency_response), desc(frequency_corrected))
 
 tta_dic <- tta_df %>% 
   select(c(cue, corrected_response)) %>% 
-  rename(c_response = corrected_response) %>% 
-  distinct()
+  rename(c_response = corrected_response)
+  #distinct()
 
 ## Renaming cues, omitting rows with NA, filtering for only cues we used
 x <- levels(tta_dic$cue)
@@ -70,9 +70,24 @@ swow_df <- SWOW_WordAssociations %>%
   filter(cue %in% x) %>% 
   distinct() %>% 
   arrange(cue, response)
-  
+
 ## Now, I want to compare cue-responses pairs. If the cue-response pair in our data set occurs in swow data set, 
-## give it a 1. If not, give it a 0.
+## give it a 0. If not, give it a 1.
+
+overlap_df <- tta_dic %>% 
+  group_by(cue) %>% 
+  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), 1, 0))
+
+## Showing how many cue-response pairs overlapped (1) or not (0)
+plot <- overlap_df %>% 
+  count(overlap)
+
+## Plotting how many cue-response pairs are overlapping or not for each cue
+plot$overlap <- as.factor(plot$overlap)
+ggplot(plot, aes(x = overlap, y = n)) + 
+  geom_bar(stat = 'identity') +
+  facet_wrap(~cue)
+
 
 
 
