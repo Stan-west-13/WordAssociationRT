@@ -297,10 +297,10 @@ stereotypy_all <- filter_participants_corrected %>%
   arrange(participant, cue, desc(frequency_response)) %>% 
   group_by(cue) %>% 
   mutate(stereotypy_score = as.integer(
-    response %in% norms_list$response[norms_list$max_response== TRUE & norms_list$cue %in% cue]), 
+    response %in% norms_list$response[norms_list$max_response == TRUE & norms_list$cue %in% cue]), 
     .after = response) %>%
   mutate(stereotypy_score_corrected = as.integer(
-    corrected_response %in% norms_list$corrected_response[norms_list$max_corrected== TRUE & 
+    corrected_response %in% norms_list$corrected_response[norms_list$max_corrected == TRUE & 
                                                             norms_list$cue %in% cue]),
     .after = corrected_response) %>% 
   # this adds the count of stereotypical responses per participant
