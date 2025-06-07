@@ -6,6 +6,7 @@ library(ez)
 library(pastecs)
 library(psych)
 library(rstatix)
+library(textstem)
 
 load("psychling/SWOW_WordAssociations.Rdata")
 d <- readRDS("psychling/mapped_response_metadata_2025-05-25.rds")
@@ -55,7 +56,11 @@ tta_dic <- tta_df %>%
   rename(c_response = corrected_response)
   #distinct()
 
-## Renaming cues, omitting rows with NA, filtering for only cues we used
+tta_dic_L <- tta_dic %>% 
+  mutate(c_response = tolower(c_response)) %>% 
+  mutate(c_response = lemmatize_words(c_response))
+  
+## Renaming cols, omitting rows with NA, filtering for only cues we used
 x <- levels(tta_dic$cue)
 x <- as.factor(x)
 
@@ -71,25 +76,50 @@ swow_df <- SWOW_WordAssociations %>%
   distinct() %>% 
   arrange(cue, response)
 
-## Now, I want to compare cue-responses pairs. If the cue-response pair in our data set occurs in swow data set, 
-## give it a 0. If not, give it a 1.
+## Making responses all lowercase and lemmatizing words
+swow_df_L <- swow_df %>% 
+  mutate(response = tolower(response)) %>% 
+  mutate(response = lemmatize_words(response))
 
+## Now, I want to compare cue-responses pairs. If the cue-response pair in our data set occurs in swow data set, 
+## give it a 'yes'. If not, give it a 'no'.
 overlap_df <- tta_dic %>% 
   group_by(cue) %>% 
   mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), "yes", "no"))
 
-## Showing how many cue-response pairs overlapped (1) or not (0)
+overlap_df_L <- tta_dic_L %>% 
+  group_by(cue) %>% 
+  mutate(overlap = ifelse((c_response %in% swow_df_L$response[swow_df_L$cue %in% cue]), "yes", "no"))
+
+ifelse((x = (overlap_df != overlap_df_L)), print(x), 'no')
+
+################### PLOTTING ###############
+
+## Showing how many cue-response pairs overlapped (yes) or not (no)
 plot <- overlap_df %>% 
-  count(overlap)
+  count(overlap) %>% 
+  rename(count = n)
+
+plot_L <- overlap_df_L %>% 
+  count(overlap) %>% 
+  rename(count = n)
 
 ## Plotting how many cue-response pairs are overlapping or not for each cue
 plot$overlap <- as.factor(plot$overlap)
-ggplot(plot, aes(x = overlap, y = n, fill = overlap)) + 
+ggplot(plot, aes(x = overlap, y = count, fill = overlap)) + 
+  geom_bar(stat = 'identity') +
+  facet_wrap(~cue)
+
+plot_L$overlap <- as.factor(plot_L$overlap)
+ggplot(plot_L, aes(x = overlap, y = count, fill = overlap)) + 
   geom_bar(stat = 'identity') +
   facet_wrap(~cue)
 
 ## Cue-response pair not overlapping by cue
-ggplot(plot, aes(x = n, y = cue, fill = overlap)) + 
+ggplot(plot, aes(x = count, y = cue, fill = overlap)) + 
+  geom_col(position = 'stack')
+
+ggplot(plot_L, aes(x = count, y = cue, fill = overlap)) + 
   geom_col(position = 'stack')
 
 
