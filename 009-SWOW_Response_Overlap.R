@@ -76,7 +76,7 @@ swow_df <- SWOW_WordAssociations %>%
 
 overlap_df <- tta_dic %>% 
   group_by(cue) %>% 
-  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), 1, 0))
+  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), "yes", "no"))
 
 ## Showing how many cue-response pairs overlapped (1) or not (0)
 plot <- overlap_df %>% 
@@ -84,10 +84,13 @@ plot <- overlap_df %>%
 
 ## Plotting how many cue-response pairs are overlapping or not for each cue
 plot$overlap <- as.factor(plot$overlap)
-ggplot(plot, aes(x = overlap, y = n)) + 
+ggplot(plot, aes(x = overlap, y = n, fill = overlap)) + 
   geom_bar(stat = 'identity') +
   facet_wrap(~cue)
 
+## Cue-response pair not overlapping by cue
+ggplot(plot, aes(x = n, y = cue, fill = overlap)) + 
+  geom_col(position = 'stack')
 
 
 
