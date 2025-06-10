@@ -93,6 +93,13 @@ overlap_df_L <- tta_dic_L %>%
 
 ifelse((x = (overlap_df != overlap_df_L)), print(x), 'no')
 
+## Looking at corrections made
+tta_check <- tta_dic %>% 
+  mutate(L_response = tta_dic_L$c_response) %>% 
+  group_by(cue) %>% 
+  mutate(L_corrected = ifelse((c_response %in% L_response), 0, 1)) %>% 
+  filter(L_corrected == 1)
+
 ################### PLOTTING ###############
 
 ## Showing how many cue-response pairs overlapped (yes) or not (no)
