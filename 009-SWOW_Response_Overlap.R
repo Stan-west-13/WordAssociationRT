@@ -57,8 +57,8 @@ tta_dic <- tta_df %>%
   #distinct()
 
 tta_dic_L <- tta_dic %>% 
-  mutate(c_response = tolower(c_response)) %>% 
-  mutate(c_response = lemmatize_words(c_response))
+  mutate(L_response = tolower(c_response)) %>% 
+  mutate(L_response = lemmatize_words(L_response))
   
 ## Renaming cols, omitting rows with NA, filtering for only cues we used
 x <- levels(tta_dic$cue)
@@ -85,16 +85,19 @@ swow_df_L <- swow_df %>%
 ## give it a 'yes'. If not, give it a 'no'.
 overlap_df <- tta_dic %>% 
   group_by(cue) %>% 
-  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), "yes", "no"))
+  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), 1, 0))
 
 overlap_df_L <- tta_dic_L %>% 
   group_by(cue) %>% 
-  mutate(overlap = ifelse((c_response %in% swow_df_L$response[swow_df_L$cue %in% cue]), "yes", "no"))
+  mutate(overlap = ifelse((L_response %in% swow_df_L$response[swow_df_L$cue %in% cue]), 1, 0)) 
 
 ifelse((x = (overlap_df != overlap_df_L)), print(x), 'no')
 
 ## Looking at corrections made
-tta_check <- tta_dic %>% 
+tta_check <- tta_dic_L %>% 
+  filter(!c_response == L_response)
+  
+  
   mutate(L_response = tta_dic_L$c_response) %>% 
   group_by(cue) %>% 
   mutate(L_corrected = ifelse((c_response %in% L_response), 0, 1)) %>% 
