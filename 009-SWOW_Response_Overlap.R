@@ -85,11 +85,17 @@ swow_df_L <- swow_df %>%
 ## give it a 'yes'. If not, give it a 'no'.
 overlap_df <- tta_dic %>% 
   group_by(cue) %>% 
-  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), 1, 0))
+  mutate(overlap = ifelse((c_response %in% swow_df$response[swow_df$cue %in% cue]), 1, 0)) %>% 
+  mutate(proportion = sum(overlap == 0)/n(),
+         no_overlap = sum(overlap == 0),
+         total = n())
 
 overlap_df_L <- tta_dic_L %>% 
   group_by(cue) %>% 
-  mutate(overlap = ifelse((L_response %in% swow_df_L$response[swow_df_L$cue %in% cue]), 1, 0)) 
+  mutate(overlap = ifelse((L_response %in% swow_df_L$response[swow_df_L$cue %in% cue]), 1, 0)) %>% 
+  mutate(proportion = sum(overlap == 0)/n(),
+         no_overlap = sum(overlap == 0),
+         total = n())
 
 ifelse((x = (overlap_df != overlap_df_L)), print(x), 'no')
 
@@ -132,6 +138,16 @@ ggplot(plot, aes(x = count, y = cue, fill = overlap)) +
 ggplot(plot_L, aes(x = count, y = cue, fill = overlap)) + 
   geom_col(position = 'stack')
 
+#############PROPORTIONS###############
 
+z_pro <- overlap_df %>% 
+  distinct(cue,proportion) %>% 
+  ungroup()%>% 
+  mutate(z_score = (proportion - mean(proportion))/sd(proportion)) %>% 
+  filter(z_score >= 2)
 
-
+z_pro_L <- overlap_df_L %>% 
+  distinct(cue,proportion) %>% 
+  ungroup()%>% 
+  mutate(z_score = (proportion - mean(proportion))/sd(proportion)) %>% 
+  filter(z_score >= 1.5)
