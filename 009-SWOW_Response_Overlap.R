@@ -61,7 +61,7 @@ tta_dic_L <- tta_dic %>%
   mutate(L_response = lemmatize_words(L_response))
   
 ## Renaming cols, omitting rows with NA, filtering for only cues we used
-x <- levels(tta_dic$cue)
+x <- tta_dic$cue
 x <- as.factor(x)
 
 swow_df <- SWOW_WordAssociations %>% 
@@ -102,12 +102,6 @@ ifelse((x = (overlap_df != overlap_df_L)), print(x), 'no')
 ## Looking at corrections made
 tta_check <- tta_dic_L %>% 
   filter(!c_response == L_response)
-  
-  
-  mutate(L_response = tta_dic_L$c_response) %>% 
-  group_by(cue) %>% 
-  mutate(L_corrected = ifelse((c_response %in% L_response), 0, 1)) %>% 
-  filter(L_corrected == 1)
 
 ################### PLOTTING ###############
 
@@ -151,3 +145,7 @@ z_pro_L <- overlap_df_L %>%
   ungroup()%>% 
   mutate(z_score = (proportion - mean(proportion))/sd(proportion)) %>% 
   filter(z_score >= 1.5)
+
+list <- overlap_df_L %>% 
+  filter(cue %in% c('abhor', "brimstone", "crusader", "detest", "forum", "overdone", "repression")) %>% 
+  distinct(cue,L_response)
