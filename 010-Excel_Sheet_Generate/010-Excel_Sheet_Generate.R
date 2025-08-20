@@ -19,23 +19,52 @@ no_load_combos <- setNames(
   mutate(condition = "no_load", .before = "sq1")
 
 # Create data frame of cues, conditions, and probability
-x <-rep(1:nrow(stim_64), 3)
-cue_combos <- data.frame(cue = stim_64[x,]) %>% 
-  arrange(cue) %>% 
-  mutate(condition = rep(c("load", "load", "no_load"), nrow(.)/3)) %>% 
-  mutate(trial_type = rep(c("match", "mismatch", "match"), nrow(.)/3)) %>% 
-  mutate(prob = 1)
+cue_combos <- expand.grid(cue = stim_64$cue, condition = c("load","no_load"), 
+                          trial_type = c("match","mismatch"),prob = 1 ) %>% 
+  filter(!c(condition == "no_load" & trial_type == "mismatch")) %>% 
+  arrange(cue)
 
 ##################################################################################################
 
-# Will be turned into a loop: 
+# Loop for sheets: 
 
-## Add load condition column and randomly choose 32 displays
-load_combos <- sample_n(og_combos_df, 32) %>% 
-  mutate(condition = "load", .before = "sq1")
+## Make sure counter is at 0 before you begin!!
+counter = 1
 
-## New data frame with both load and no load, randomly shuffled
-all_combos <- rbind(load_combos, no_load_combos)
+while (counter <= 1){
+  # Keeps track of how many sheets have been generated
+  print(counter)
+  counter = counter + 1
+  
+  # Creates meta df with randomized cue positions
+  meta_df <- expand.grid(cue = sample(stim_64$cue, nrow(stim_64)))
+  
+  # Add load condition column and randomly choose 32 displays
+  load_combos <- sample_n(og_combos_df, 32) %>% 
+    mutate(condition = "load", .before = "sq1")
+  
+  # Data frames for within subject sheet generation 
+  condition_df <- data.frame(
+    condition = c("load", "no_load"),
+    prob = c(0.5, 0.5)
+  )
+  TT_df <- data.frame(
+    trial_type = c("match", "mismatch"),
+    prob = c(0.5, 0.5)
+  )
+  
+  # Loop to assign cue with condition, trial type, and combo
+  for (i in 1:nrow(meta_df)){
+    c <- sample(condition_df$condition, size = 1, prob = condition_df$prob)
+    meta_df$condition[i] <- c 
+    condition_df$prob[condition_df$condition == c] <- condition_df$prob[condition_df$condition == c] - (1/32)
+  }
+  
+  print(meta_df)
+  
+  
+}
+
 
 
 
