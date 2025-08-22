@@ -34,7 +34,6 @@ counter = 1
 while (counter <= 1){
   # Keeps track of how many sheets have been generated
   print(counter)
-  counter = counter + 1
   
   # Creates meta df with randomized cue positions
   meta_df <- expand.grid(cue = sample(stim_64$cue, nrow(stim_64)))
@@ -58,10 +57,17 @@ while (counter <= 1){
     c <- sample(condition_df$condition, size = 1, prob = condition_df$prob)
     meta_df$condition[i] <- c 
     condition_df$prob[condition_df$condition == c] <- condition_df$prob[condition_df$condition == c] - (1/32)
+    condition_df$prob[condition_df$condition != c] <- condition_df$prob[condition_df$condition != c] + (1/32)
+    print(i)
+    print(condition_df)
+    print(c)
+    print("---------------")
   }
   
   print(meta_df)
   
+  # Update counter
+  counter = counter + 1
   
 }
 
