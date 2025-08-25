@@ -1,5 +1,5 @@
 ---
-title: "Creativity and Stereotypy Scores for Responses - MG"
+title: "Creativity and Stereotypy Scores for Responses"
 output: html_notebook
 ---
 
@@ -120,7 +120,7 @@ norm_dic_corrected <- norms_list %>%
 
 # Creative Scores
 
-For the creative scores, a point is given if the response does not occur for that cue in the norms list. However, the response has to be related to the cue, which was judged by a lab member.
+For the creative scores, a point is given if the response does not occur for that cue in the norms list. 
 
 I made a df that only includes the creative condition and takes out any blanks. In Playfoot, the creative scores were only given to the creative condition to compare stereotypy in the peer to creativity in the creative condition. The creative score is used to identify truly creative responses that are associated to the cue.
 
@@ -153,7 +153,7 @@ Firstly, one point is given if a response is the response most commonly given to
 
 Secondly, if a cue has more than one response that has an equal chance of being given, then a point is awarded for giving either response.
 
-(Third, only data from participants who responded >90% of the time were used.)
+(***Third, only data from participants who responded >90% of the time were used.)
 
 I grab each cue, and I want to evaluate what the highest frequency for a response is. Responses equal to that number for a cue get assigned a 1 and if not a 0. So, if a response for a cue is equal to the response for that cue with the highest frequency, assign that row a 1. If not, assign that row a zero. This also accounts for responses to a cue that have an equal number for the frequency_response.
 
