@@ -1,5 +1,7 @@
 library(ggplot2)
 library(rearrr)
+
+og_combos_df <- read_xlsx("010-Excel_Sheet_Generate/for_generating_sq_combo.xlsx")
 m <- matrix(c(4.88,  8.43,
   9.14,  1.54,
   8.53, -4.95,
