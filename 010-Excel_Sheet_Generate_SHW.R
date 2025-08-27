@@ -1,6 +1,8 @@
 library(tidyverse)
 library(readxl)
 library(purrr)
+library(progressr)
+library(parallel)
 ##################################################################################################
 
 # Only run once:
@@ -25,7 +27,7 @@ condition_probs <- data.frame(condition = c("load","no_load"), prob = c(0.5,0.5)
 
 ## Map is like a loop, this is itterating over 20 integers (participants) and running the
 ## code defined in the anonymous function:
-x <- map(seq.int(1,20,1), function(x){
+map(seq.int(1,2,1), function(x){
   df <- data.frame(pp = rep(x, 64)) ## initailize dataframe with the participant id
   df$cue <- sample(stim$cue, 64, replace = FALSE) ## randomly sample the 64 cues without replacement
   df$condition <- 0 ## set a placeholder for condition to use with the while loop
@@ -49,7 +51,7 @@ x <- map(seq.int(1,20,1), function(x){
   condition_probs$prob <- 0.5 ## Finally reset the probabilities in case the for loop has to run multiple times for a participant
   trial_type_probs$prob <- 0.5
   }
-  
+  write.csv(df, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_square_combinations.csv" ),row.names = FALSE)
   return(df)
 })
 
