@@ -27,8 +27,8 @@ condition_probs <- data.frame(condition = c("load","no_load"), prob = c(0.5,0.5)
 
 ## Map is like a loop, this is itterating over 20 integers (participants) and running the
 ## code defined in the anonymous function:
-map(seq.int(1,2,1), function(x){
-  df <- data.frame(pp = rep(x, 64)) ## initailize dataframe with the participant id
+x <- map_dfr(seq.int(1,2,1), function(x){
+  df <- data.frame(pp = rep(x, 64), sq1 = NA,sq2=NA,sq3=NA,sq4=NA,sq5=NA,sq6=NA,sq7=NA,sq8=NA) ## initailize dataframe with the participant id
   df$cue <- sample(stim$cue, 64, replace = FALSE) ## randomly sample the 64 cues without replacement
   df$condition <- 0 ## set a placeholder for condition to use with the while loop
   while(any(rle(df$condition)$lengths > 3)){ ## This is saying while there are any runs > 3 in the condition column for a participant, keep running the for loop.
@@ -37,6 +37,7 @@ map(seq.int(1,2,1), function(x){
         if (df$condition[i] == "load"){
           condition_probs$prob[condition_probs$condition == "load"] <- condition_probs$prob[condition_probs$condition == "load"] - (1/64) # if the current iteration is load, subtract 1/64
           df$TT[i]  <- sample(trial_type_probs$TT, size = 1, prob = trial_type_probs$prob) ## also sample a trial type for load
+          df[i,2:9] <- sample_n(og_combos_df,size = 1, replace = FALSE)
             if (df$TT[i] == "match"){ ## if that trial type is match,
               trial_type_probs$prob[trial_type_probs$TT == "match"] <- trial_type_probs$prob[trial_type_probs$TT == "match"] - (1/32) # subtract 1/32 from the match probability 
             }else{
@@ -45,6 +46,7 @@ map(seq.int(1,2,1), function(x){
         } else{
           condition_probs$prob[condition_probs$condition == "no_load"] <- condition_probs$prob[condition_probs$condition == "no_load"] - (1/64) ## where condition is no_load, subtract 1/64
           df$TT[i] <- "match" ## and assign it "match" because no_load only gets match
+          df[i,2:9] <- rep(1,8)
         }
       
     }
@@ -66,5 +68,5 @@ map(x,function(x){
 
 
 
-
+any(duplicated(x[[1]][x$condition == "load",2:9]))
 
