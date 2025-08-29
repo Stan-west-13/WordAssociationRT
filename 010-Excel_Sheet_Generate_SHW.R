@@ -27,7 +27,7 @@ condition_probs <- data.frame(condition = c("load","no_load"), prob = c(0.5,0.5)
 
 ## Map is like a loop, this is itterating over 20 integers (participants) and running the
 ## code defined in the anonymous function:
-x <- map_dfr(seq.int(1,2,1), function(x){
+x <- map(seq.int(1,2,1), function(x){
   df <- data.frame(pp = rep(x, 64), sq1 = NA,sq2=NA,sq3=NA,sq4=NA,sq5=NA,sq6=NA,sq7=NA,sq8=NA) ## initailize dataframe with the participant id
   df$cue <- sample(stim$cue, 64, replace = FALSE) ## randomly sample the 64 cues without replacement
   df$condition <- 0 ## set a placeholder for condition to use with the while loop
