@@ -27,14 +27,9 @@ condition_probs <- data.frame(condition = c("load","no_load"), prob = c(0.5,0.5)
 
 ## Map is like a loop, this is itterating over 20 integers (participants) and running the
 ## code defined in the anonymous function:
-<<<<<<< HEAD
-x <- map(seq.int(1,2,1), function(x){
-  df <- data.frame(pp = rep(x, 64), sq1 = NA,sq2=NA,sq3=NA,sq4=NA,sq5=NA,sq6=NA,sq7=NA,sq8=NA) ## initailize dataframe with the participant id
-=======
 x <- map(c(1:2), function(x){
   combos <- og_combos_df
   df <- data.frame(pp = rep(x, each = 64), sq1 = NA,sq2=NA,sq3=NA,sq4=NA,sq5=NA,sq6=NA,sq7=NA,sq8=NA) ## initailize dataframe with the participant id
->>>>>>> 001fe4104d3475c0a189331cd38e45ea26baef16
   df$cue <- sample(stim$cue, 64, replace = FALSE) ## randomly sample the 64 cues without replacement
   df$condition <- 0 ## set a placeholder for condition to use with the while loop
   while(any(rle(df$condition)$lengths > 3)){ ## This is saying while there are any runs > 3 in the condition column for a participant, keep running the for loop.
