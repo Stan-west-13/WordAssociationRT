@@ -6,7 +6,7 @@ library(readxl)
 # Only run once:
 
 # Read in list of valid combinations of 3 squares presented out of 8
-og_combos_df <- read_xlsx("010-Excel_Sheet_Generate/for_generating_sq_combo.xlsx")
+og_combos_df <- read_xlsx("010-Excel_Sheet_Generate/for_generating_sq_combo_USE.xlsx")
 
 # Read in csv of cue words and extract one cues for now
 stim_og <- read.csv("010-Excel_Sheet_Generate/stim_64_NNVB.csv")
@@ -71,6 +71,15 @@ while (counter <= 1){
   
 }
 
+##########################################
+# Randomly select 32 displays to use for experiment and assign other 12 to practice
 
+# we could set a seed to keep this the same, but the output has been stored in the two files that I wrote below already
+exp_combos <- sample_n(og_combos_df, 32, replace = F)
+practice_combos <- anti_join(og_combos_df, exp_combos)
+use_p_combos <- sample_n(practice_combos, 10, replace = F)
+
+write.csv(exp_combos, file = "exp_combos.csv", row.names = F)
+write.csv(use_p_combos, file = "practice_combos.csv", row.names = F)
 
 
