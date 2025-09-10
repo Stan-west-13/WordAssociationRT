@@ -55,7 +55,7 @@ x <- map(c(1:2), function(x){
   condition_probs$prob <- 0.5 ## Finally reset the probabilities in case the for loop has to run multiple times for a participant
   trial_type_probs$prob <- 0.5
   }
-  write.csv(df, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_square_combinations.csv" ),row.names = FALSE)
+  write.csv(df, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_trial_list.csv" ),row.names = FALSE) ## Add N and NL to end of trial list for load and no load.
   return(df)
 })
 
@@ -70,4 +70,11 @@ map(x,function(x){
 
 
 any(duplicated(x[[1]][x$condition == "load",2:9]))
+
+
+
+
+
+
+
 
