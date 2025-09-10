@@ -8,7 +8,7 @@ library(parallel)
 # Only run once:
 
 # Read in list of valid combinations of 3 squares presented out of 8
-og_combos_df <- read_xlsx("010-Excel_Sheet_Generate/for_generating_sq_combo.xlsx")
+og_combos_df <- read.csv("010-Excel_Sheet_Generate/exp_combos.csv")
 
 # Read in csv of cue words and extract one cues for now
 stim <- read.csv("010-Excel_Sheet_Generate/stim_64_NNVB.csv") |>
@@ -55,7 +55,11 @@ x <- map(c(1:2), function(x){
   condition_probs$prob <- 0.5 ## Finally reset the probabilities in case the for loop has to run multiple times for a participant
   trial_type_probs$prob <- 0.5
   }
-  write.csv(df, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_trial_list.csv" ),row.names = FALSE) ## Add N and NL to end of trial list for load and no load.
+  
+  df_split <- split(df, df$condition)
+  
+  write.csv(df_split$load, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_trial_list_L.csv" ),row.names = FALSE)
+  write.csv(df_split$no_load, paste0("test_psychopy/TTA_",sprintf("%03d",unique(df$pp)),"_trial_list_NL.csv" ),row.names = FALSE)## Add N and NL to end of trial list for load and no load.
   return(df)
 })
 

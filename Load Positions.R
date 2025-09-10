@@ -1,7 +1,7 @@
 library(ggplot2)
 library(rearrr)
 
-og_combos_df <- read_xlsx("010-Excel_Sheet_Generate/for_generating_sq_combo_USE.xlsx")
+og_combos_df <- read.csv("010-Excel_Sheet_Generate/exp_combos.csv")
 m <- matrix(c(4.88,  8.43,
   9.14,  1.54,
   8.53, -4.95,
@@ -33,7 +33,7 @@ og_combos_df_map <- og_combos_df |>
   pivot_longer(cols = everything(),
                names_to = "square",
                values_to = "value") |>
-  mutate(combo_n = rep(1:48, each = 8))
+  mutate(combo_n = rep(1:32, each = 8))
 
 positions <- left_join(og_combos_df_map,m)
 
@@ -44,7 +44,7 @@ positions[positions$value == 0,]$y <- NA
 
 
 ggplot(positions, aes(x = x, y = y))+
-  geom_point() +
+  geom_point(shape  =15, size = 3) +
   geom_point(aes(x = 0, y = 0, color = "red"))+
   facet_wrap(~combo_n)
   
