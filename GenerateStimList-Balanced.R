@@ -1,6 +1,6 @@
 library(tidyverse)
 library(purrr)
-
+library(progressr)
 # Only run once:
 
 # Read in list of valid combinations of 3 squares presented out of 8
@@ -17,8 +17,21 @@ cue_splits <- split(stim,list(stim$strength_strat,stim$type))
 trial_type_probs_L <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 trial_type_probs_NL <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 
+
+with_progress({
+  p <- progressor(along = 1:10)
+  results <- map(1:10, ~{
+    p()  # Update progress
+    Sys.sleep(0.5)  # Simulates a delay
+    .x^2
+  })
+})
+
 ## Create two stim sheets for each participant.
-x <- map(c(1), function(x){ ## change values in c() for more participants
+with_progress({
+  p <- progressor(along = 1:100)
+  x <- map(c(1:100), function(x){## change values in c() for more participants
+  p() ## progress bar
   combos <- og_combos_df ## load in load combos
   cues <- cue_splits ## load in cues split by association strength and type
   df <- data.frame(pp = rep(x, each = 64), sq1 = NA,sq2=NA,sq3=NA,sq4=NA,sq5=NA,sq6=NA,sq7=NA,sq8=NA) ## initailize dataframe with the participant id
@@ -64,8 +77,11 @@ x <- map(c(1), function(x){ ## change values in c() for more participants
     trial_type_probs_L$prob <- 0.5
   }
   
-  dir.create(paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$no_load$pp))))
+  if (!file.exists(paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$no_load$pp))))){
+    dir.create(paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$no_load$pp))))
+  }
   write.csv(df_split$load, paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$load$pp)),"/TTA_",sprintf("%03d",unique(df_split$load$pp)),"_trial_list_L.csv" ),row.names = FALSE)
   write.csv(df_split$no_load, paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$no_load$pp)),"/TTA_",sprintf("%03d",unique(df_split$no_load$pp)),"_trial_list_NL.csv" ),row.names = FALSE)## Add N and NL to end of trial list for load and no load.
   return(df_split)
+})
 })
