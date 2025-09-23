@@ -3,6 +3,7 @@ library(purrr)
 library(progressr)
 library(future)
 library(furrr)
+library(parallel)
 # Only run once:
 
 # Read in list of valid combinations of 3 squares presented out of 8
@@ -19,8 +20,8 @@ cue_splits <- split(stim,list(stim$strength_strat,stim$type))
 trial_type_probs_L <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 trial_type_probs_NL <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 
-
-plan(multisession, workers= 28)
+cores <- detectCores()
+plan(multisession, workers= cores) ## plan a multisession optimized environment (using max number of cores )
 ## Create two stim sheets for each participant.
 
 system.time(with_progress({
