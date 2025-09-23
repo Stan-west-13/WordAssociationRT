@@ -1,6 +1,8 @@
 library(tidyverse)
 library(purrr)
 library(progressr)
+library(future)
+library(furrr)
 # Only run once:
 
 # Read in list of valid combinations of 3 squares presented out of 8
@@ -18,11 +20,12 @@ trial_type_probs_L <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 trial_type_probs_NL <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5))
 
 
-
+plan(multisession, workers= 28)
 ## Create two stim sheets for each participant.
-with_progress({
-    p <- progressor(along = 1:100)
-    x <- map(c(1), function(x){## change values in c() for more participants
+
+system.time(with_progress({
+    p <- progressor(along = 1:25)
+    x <- future_map(c(1:25), function(x){## change values in c() for more participants
     p() ## progress bar
     combos <- og_combos_df ## load in load combos
     cues <- cue_splits ## load in cues split by association strength and type
@@ -76,10 +79,9 @@ with_progress({
     write.csv(df_split$load, paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$load$pp)),"/TTA_",sprintf("%03d",unique(df_split$load$pp)),"_trial_list_L.csv" ),row.names = FALSE)
     write.csv(df_split$no_load, paste0("stim_files/TTA_",sprintf("%03d",unique(df_split$no_load$pp)),"/TTA_",sprintf("%03d",unique(df_split$no_load$pp)),"_trial_list_NL.csv" ),row.names = FALSE)## Add N and NL to end of trial list for load and no load.
     return(df_split)
-  })
+  },.options = furrr_options(seed = TRUE))
 })
-
-
+)
 
 
 
