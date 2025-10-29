@@ -18,7 +18,7 @@ filter_participants <- combined_meta %>%
 ## Filter out responses faster than 250ms and responses that are more than 
 ## 2.5 standard deviations away from participant mean ########################
 glmer_df <- filter_participants |>
-  select(participant,condition,rt,cue) |>
+  dplyr::select(participant,condition,rt,cue) |>
   filter(rt > 250) |>
   group_by(participant) |>
   mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
@@ -29,7 +29,7 @@ glmer_df <- filter_participants |>
     condition = factor(condition, c("child", "peer", "short", "creative")),
     cue = factor(cue)
   ) |>
-  left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
+  left_join(combined_meta %>% dplyr::select(cue,type,strength_strat) %>% unique, by = "cue")
   
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues ###
