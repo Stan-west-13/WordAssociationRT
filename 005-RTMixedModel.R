@@ -8,6 +8,7 @@ library(lme4)
 library(lmerTest)
 library(statmod)
 library(fitdistrplus)
+library(rstatix)
 
 ## Remove outliers and convert rt to miliseconds ####################
 filter_participants <- combined_meta %>%
@@ -47,6 +48,16 @@ summary(glmer_fit)
 glmer_df %>%
   group_by(condition) %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
+  View()
+
+summary_rt <- glmer_df %>% 
+  group_by(condition) %>% 
+  summarize(
+    m = mean(rt),
+    s = sd(rt),
+    n = n(),
+    se = s/sqrt(n())
+  ) %>% 
   View()
 
 
