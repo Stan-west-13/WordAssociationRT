@@ -561,8 +561,8 @@ score_means <- score_means_wide %>%
   )
 
 ggplot(score_means, aes(x = condition, y = proportion, fill = score)) + 
-  geom_bar(stat = 'identity', position = "dodge")+
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+  geom_bar(stat = 'identity', position = "dodge") 
+  #stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
 
 ```
