@@ -8,6 +8,7 @@ library(lme4)
 library(lmerTest)
 library(statmod)
 library(fitdistrplus)
+library(rstatix)
 
 ## Remove outliers and convert rt to miliseconds ####################
 filter_participants <- combined_meta %>%
@@ -18,7 +19,7 @@ filter_participants <- combined_meta %>%
 ## Filter out responses faster than 250ms and responses that are more than 
 ## 2.5 standard deviations away from participant mean ########################
 glmer_df <- filter_participants |>
-  select(participant,condition,rt,cue) |>
+  dplyr::select(participant,condition,rt,cue) |>
   filter(rt > 250) |>
   group_by(participant) |>
   mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
@@ -29,7 +30,7 @@ glmer_df <- filter_participants |>
     condition = factor(condition, c("child", "peer", "short", "creative")),
     cue = factor(cue)
   ) |>
-  left_join(combined_meta %>% select(cue,type,strength_strat) %>% unique, by = "cue")
+  left_join(combined_meta %>% dplyr::select(cue,type,strength_strat) %>% unique, by = "cue")
   
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues ###
@@ -47,6 +48,16 @@ summary(glmer_fit)
 glmer_df %>%
   group_by(condition) %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
+  View()
+
+summary_rt <- glmer_df %>% 
+  group_by(condition) %>% 
+  summarize(
+    m = mean(rt),
+    s = sd(rt),
+    n = n(),
+    se = s/sqrt(n())
+  ) %>% 
   View()
 
 
