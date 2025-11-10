@@ -62,12 +62,10 @@ summary_rt <- glmer_df %>%
 
 
 ## Fit model with association strength and word-type (co or non-co) strata
-glmer_df_type <- glmer_df %>%
-  left_join(combined_meta %>% select(cue, type,strength_strat) %>% unique(), by = "cue")
 
 glmer_fit_wordtype <- glmer(
   rt ~ condition * type * strength_strat + (strength_strat:type|participant) + (1 | cue),
-  data = glmer_df_type,
+  data = glmer_df,
   family = inverse.gaussian("identity")
 )
   
