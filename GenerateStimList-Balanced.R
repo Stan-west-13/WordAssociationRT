@@ -21,8 +21,9 @@ trial_type_probs_NL <- data.frame(TT = c("match", "mismatch"), prob = c(0.5,0.5)
 
 ## Create two stim sheets for each participant.
 with_progress({
-    p <- progressor(along = 1:100)
-    x <- map(c(1), function(x){## change values in c() for more participants
+    n <- c(1:100) ## change values in c() for more participants
+    p <- progressor(along = n)
+    x <- map(n, function(x){
     p() ## progress bar
     combos <- og_combos_df ## load in load combos
     cues <- cue_splits ## load in cues split by association strength and type
@@ -79,7 +80,10 @@ with_progress({
   })
 })
 
-
+map(x[[2]],function(x){
+  x %>%
+    left_join(stim,by = "cue")
+})
 
 
 
