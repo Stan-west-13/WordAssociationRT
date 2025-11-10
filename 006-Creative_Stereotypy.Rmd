@@ -555,7 +555,8 @@ histogram_means <- histogram_means_wide %>%
   pivot_longer(
     cols = c('stereotypy_proportion_c', 'creative_proportion_c'),
     names_to = 'score',
-    values_to = 'proportion'
+    values_to = 'proportion',
+    names_transform = list(score = as.factor)
   )
 
 ggplot(histogram_means, aes(x = proportion, fill = score)) +
@@ -575,6 +576,8 @@ ggplot(histogram_means, aes(x = condition, y = proportion, fill = score)) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "#FCFBFF"))
 
+ggsave()
+
 ## ANOVA for graphs
 s_c_model <- ezANOVA(data = histogram_means,
                     dv = proportion, 
@@ -583,6 +586,28 @@ s_c_model <- ezANOVA(data = histogram_means,
                     between = condition, 
                     detailed = T)
 s_c_model
+
+## Post-hoc simple effects
+creative_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "creative")
+summary(creative_se)
+
+peer_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "peer")
+summary(peer_se)
+
+child_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "child")
+summary(child_se)
+
+short_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "short")
+summary(short_se)
+
 
 ```
 
