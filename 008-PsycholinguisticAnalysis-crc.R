@@ -169,12 +169,16 @@ dplot <- filter_participants |>
   pivot_wider(id_cols = c(metric, type, condition_contrast), names_from = stat, values_from = value) |>
   ungroup()
 
-dplot |>
+p_points <- dplot |>
   filter(metric != "Nsyll") |>
   droplevels() |>
   ggplot(aes(x = condition_contrast, y = m, color = type)) +
-  geom_pointrange(aes(ymin = m - (se*2), ymax = m + (se*2)), position = position_dodge(.7)) +
-  facet_wrap(vars(metric))
+  geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 2, linewidth = 1.5) +
+  facet_wrap(vars(metric)) +
+  theme_bw(base_size = 36)
+
+ggsave("within-cue-contrasts_pointrange.pdf", plot = p_points, width = 15, height = 12, units = "in", dpi = 300)
+
 
 dplotBar <- filter_participants |>
   filter(condition %in% c("peer", "short", "child")) |>
@@ -190,7 +194,14 @@ dplotBar <- filter_participants |>
   summarize(across(c(Lg10WF, Lg10CD, aoa, Nletters, Nsyll), function(x) mean(x, na.rm = TRUE))) |>
   pivot_longer(cols = Lg10WF:Nsyll, names_to = "metric", values_to = "value") |>
   group_by(type, condition, metric) |>
-  summarize(across(c(value), list(m= ~ mean(.x, na.rm = T), s = ~ sd(.x, na.rm = T), se =  ~ sd(.x, na.rm = T) / sqrt(60)))) |>
-  pivot_longer(cols = pc_m:sc_se, names_to = c("condition_contrast", "stat"), names_sep = "_", values_to = "value") |>
-  pivot_wider(id_cols = c(metric, type, condition_contrast), names_from = stat, values_from = value) |>
+  summarize(across(c(value), list(m = ~ mean(.x, na.rm = T), s = ~ sd(.x, na.rm = T), se =  ~ sd(.x, na.rm = T) / sqrt(60)))) |>
   ungroup()
+
+
+dplotBar |>
+  filter(metric != "Nsyll") |>
+  droplevels() |>
+  ggplot(aes(x = condition, y = value_m, fill = type)) +
+  geom_bar(stat = "identity", aes(), position = position_dodge(.9)) +
+  geom_errorbar(aes(ymin = value_m - value_s, ymax = value_m + value_s), position = position_dodge(.9)) +
+  facet_wrap(vars(metric), scale = "free_y")
