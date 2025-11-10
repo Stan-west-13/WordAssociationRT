@@ -542,28 +542,47 @@ pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condi
 I am making a bar graph with proportion of stereotypy and creativity scores per condition. I want the stereotypy and creativity proportions for each condition next to each other
 
 ```{r}
+## Histogram
 
-t <- stereotypy_ssonly_corrected %>% 
-  group_by(condition) %>% 
-  summarize(mean_proportion_s = mean(stereotypy_proportion_c)) 
-  
-t2 <- creative_csonly_corrected %>% 
-  group_by(condition) %>% 
-  summarize(mean_proportion_c = mean(creative_proportion_c))
+w <- stereotypy_ssonly_corrected %>% 
+  select(c('participant', 'condition', 'stereotypy_proportion_c'))
+q <- creative_csonly_corrected %>% 
+  select(c('participant', "condition", 'creative_proportion_c'))
 
-score_means_wide <- merge(t, t2) 
+histogram_means_wide <- merge(w, q)
 
-score_means <- score_means_wide %>% 
+histogram_means <- histogram_means_wide %>% 
   pivot_longer(
-    cols = c('mean_proportion_s', 'mean_proportion_c'),
+    cols = c('stereotypy_proportion_c', 'creative_proportion_c'),
     names_to = 'score',
     values_to = 'proportion'
   )
 
-ggplot(score_means, aes(x = condition, y = proportion, fill = score)) + 
-  geom_bar(stat = 'identity', position = "dodge") 
-  #stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+ggplot(histogram_means, aes(x = proportion, fill = score)) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 40) + 
+  geom_density(color = "black", alpha = 0.3) +
+  facet_wrap(vars(condition)) +
+  scale_fill_manual(values = c("#FDD023", "#613F9D")) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "#FCFBFF"))
 
+## Barplot
+
+ggplot(histogram_means, aes(x = condition, y = proportion, fill = score)) + 
+  stat_summary(aes(y = proportion), fun = "mean", geom = "bar", position = 'dodge') +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75, position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("#FDD023", "#613F9D")) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "#FCFBFF"))
+
+## ANOVA for graphs
+s_c_model <- ezANOVA(data = histogram_means,
+                    dv = proportion, 
+                    within = score,
+                    wid = participant,
+                    between = condition, 
+                    detailed = T)
+s_c_model
 
 ```
 
