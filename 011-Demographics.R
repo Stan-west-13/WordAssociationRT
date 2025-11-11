@@ -48,13 +48,14 @@ demo_table <- flextable(data = head(demo_summary),
                           empty_blanks()
 
 demo_table <- demo_table %>% 
-  add_header_row(., values = c('','', 'Age', 'Toddler Interaction Frequency'), 
+  add_header_row(., values = c('','', 'Age', 'Toddler Interaction'), 
                  colwidths = c(2, 2, 6, 2)) %>% 
   align(align = 'center', part = 'all') %>% 
   set_header_labels(., n = 'n(male)', mean_age = 'mean', sd_age = 'SD', min_age = 'min',
-                    max_age = 'max', NA_age = 'NA values', weekly_int = 'Weekly +', 
-                    less_int = 'Less than weekily') %>% 
-  bg(bg = '#FCFBFF', part = 'all')
+                    max_age = 'max', NA_age = 'NA', weekly_int = '≥ Weekly', 
+                    less_int = '< Weekily') %>% 
+  bg(bg = '#FCFBFF', part = 'all') %>% 
+  autofit(., add_w = 0, add_h = 0)
   
 save_as_docx(demo_table, path = "demographics_table.docx")
 

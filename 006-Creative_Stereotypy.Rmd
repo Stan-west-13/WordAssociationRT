@@ -75,6 +75,7 @@ filter_participants_corrected <- filter_participants %>%
   mutate(corrected_response = ifelse((is.na(revision) != TRUE) & revision != "", revision, response),
          .after = revision) %>% 
   filter(response != "") %>%
+  filter(!is.na(response)) %>% 
   filter(response != "notsure", response != "idk")
   
 
@@ -576,7 +577,7 @@ ggplot(histogram_means, aes(x = condition, y = proportion, fill = score)) +
   theme_minimal() +
   theme(plot.background = element_rect(fill = "#FCFBFF"))
 
-ggsave()
+ggsave(filename = 'task_adherence.png' ,width = 5, height = 4, dpi = 600, units = "in", device='png')
 
 ## ANOVA for graphs
 s_c_model <- ezANOVA(data = histogram_means,
