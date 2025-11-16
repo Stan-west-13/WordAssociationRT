@@ -9,7 +9,7 @@ library(lmerTest)
 library(statmod)
 library(fitdistrplus)
 library(rstatix)
-
+library(ggsignif)
 ## Remove outliers and convert rt to miliseconds ####################
 filter_participants <- combined_meta %>%
   filter(!participant %in% c("TTA_067","TTA_068")) %>%
@@ -92,7 +92,16 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   theme_bw(base_size = 20)+
   labs(y = "mean response time",
        title = "Condition Response Times"
-       )
+       )+
+  theme(legend.position = "none")+
+  ggsignif::geom_signif(stat="signif",
+                        position = "identity",
+                        comparisons = list(c("peer","child"),
+                                           c("child","short"),
+                                           c("child","creative")),
+                        annotations = "***",
+                        size = 1,
+                        y_position = c(2000,2250,2500))
 
 
 
