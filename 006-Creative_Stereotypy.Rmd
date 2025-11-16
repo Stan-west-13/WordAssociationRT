@@ -75,6 +75,7 @@ filter_participants_corrected <- filter_participants %>%
   mutate(corrected_response = ifelse((is.na(revision) != TRUE) & revision != "", revision, response),
          .after = revision) %>% 
   filter(response != "") %>%
+  filter(!is.na(response)) %>% 
   filter(response != "notsure", response != "idk")
   
 
@@ -244,6 +245,7 @@ creative_all <- filter_participants_corrected %>%
          .after = corrected_response) %>% 
   #this adds the proportion of creative responses per participant
   mutate(creative_proportion = creative_count/60, .after = creative_count) %>% 
+  mutate(creative_proportion_c = creative_count_corrected/60, .after = creative_count_corrected) %>% 
   ungroup() %>% 
   select(c(-cue_onset:-key, -response.start, -response.stop))
 
@@ -310,6 +312,7 @@ stereotypy_all <- filter_participants_corrected %>%
          .after = corrected_response) %>% 
   #this adds the proportion of stereotypical responses per participant
   mutate(stereotypy_proportion = stereotypy_count/60, .after = stereotypy_count) %>% 
+  mutate(stereotypy_proportion_c = stereotypy_count_corrected/60, .after = stereotypy_count_corrected) %>%
   select(c(-cue_onset:-key, -response.start, -response.stop))
 
 # Counting how many stereotypical responses for each condition
@@ -363,7 +366,7 @@ creative_csonly <- creative_all %>%
   distinct() 
 
 creative_csonly_corrected <- creative_all %>% 
-  select(c(participant, condition, creative_count_corrected)) %>% 
+  select(c(participant, condition, creative_count_corrected, creative_proportion_c)) %>% 
   distinct()
 
 creative_csonly$condition = factor(creative_csonly$condition)
@@ -458,7 +461,7 @@ stereotypy_ssonly <- stereotypy_all %>%
   distinct() 
 
 stereotypy_ssonly_corrected <- stereotypy_all %>% 
-  select(c(participant, condition, stereotypy_count_corrected)) %>% 
+  select(c(participant, condition, stereotypy_count_corrected, stereotypy_proportion_c)) %>% 
   distinct()
 
 stereotypy_ssonly$condition = factor(stereotypy_ssonly$condition)
@@ -489,6 +492,11 @@ ggplot(stereotypy_ssonly, aes(x = condition, y = stereotypy_proportion, fill = c
 # Plot for average corrected stereotypy count for each condition
 ggplot(stereotypy_ssonly_corrected, aes(x = condition, y = stereotypy_count_corrected, fill = condition)) + 
   stat_summary(aes(y = stereotypy_count_corrected), fun = "mean", geom = "bar") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+
+# Plot for average corrected stereotypy proportion for each condition
+ggplot(stereotypy_ssonly_corrected, aes(x = condition, y = stereotypy_proportion_c, fill = condition)) + 
+  stat_summary(aes(y = stereotypy_proportion_c), fun = "mean", geom = "bar") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
 # ANOVA's for stereotypy count
@@ -531,6 +539,78 @@ pairwise.t.test(stereotypy_ssonly$stereotypy_proportion, stereotypy_ssonly$condi
 
 ```
 
+### Plot for Psychonomics Poster
+I am making a bar graph with proportion of stereotypy and creativity scores per condition. I want the stereotypy and creativity proportions for each condition next to each other
+
+```{r}
+## Histogram
+
+w <- stereotypy_ssonly_corrected %>% 
+  select(c('participant', 'condition', 'stereotypy_proportion_c'))
+q <- creative_csonly_corrected %>% 
+  select(c('participant', "condition", 'creative_proportion_c'))
+
+histogram_means_wide <- merge(w, q)
+
+histogram_means <- histogram_means_wide %>% 
+  pivot_longer(
+    cols = c('stereotypy_proportion_c', 'creative_proportion_c'),
+    names_to = 'score',
+    values_to = 'proportion',
+    names_transform = list(score = as.factor)
+  )
+
+ggplot(histogram_means, aes(x = proportion, fill = score)) +
+  geom_histogram(position = "identity", alpha = 0.6, bins = 40) + 
+  geom_density(color = "black", alpha = 0.3) +
+  facet_wrap(vars(condition)) +
+  scale_fill_manual(values = c("#FDD023", "#613F9D")) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "#FCFBFF"))
+
+## Barplot
+
+ggplot(histogram_means, aes(x = condition, y = proportion, fill = score)) + 
+  stat_summary(aes(y = proportion), fun = "mean", geom = "bar", position = 'dodge') +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75, position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("#FDD023", "#613F9D")) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "#FCFBFF"))
+
+ggsave(filename = 'task_adherence.png' ,width = 5, height = 4, dpi = 600, units = "in", device='png')
+
+## ANOVA for graphs
+s_c_model <- ezANOVA(data = histogram_means,
+                    dv = proportion, 
+                    within = score,
+                    wid = participant,
+                    between = condition, 
+                    detailed = T)
+s_c_model
+
+## Post-hoc simple effects
+creative_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "creative")
+summary(creative_se)
+
+peer_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "peer")
+summary(peer_se)
+
+child_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "child")
+summary(child_se)
+
+short_se <- aov(proportion ~ score + Error(participant/score), 
+                    data = histogram_means,
+                    subset = condition == "short")
+summary(short_se)
+
+
+```
 
 
 <<<<<<< HEAD

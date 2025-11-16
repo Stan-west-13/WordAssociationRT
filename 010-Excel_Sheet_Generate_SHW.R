@@ -11,8 +11,8 @@ library(parallel)
 og_combos_df <- read.csv("010-Excel_Sheet_Generate/exp_combos.csv")
 
 # Read in csv of cue words and extract one cues for now
-stim <- read.csv("010-Excel_Sheet_Generate/stim_64_NNVB.csv") |>
-  select(cue)
+stim <- read.csv("010-Excel_Sheet_Generate/stim_64_NNVB.csv")|>
+  select(cue,strength_strat,type)
 
 
 # Create data frame of cues, conditions, and probability

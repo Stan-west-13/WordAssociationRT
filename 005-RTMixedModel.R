@@ -8,6 +8,7 @@ library(lme4)
 library(lmerTest)
 library(statmod)
 library(fitdistrplus)
+library(rstatix)
 
 ## Remove outliers and convert rt to miliseconds ####################
 filter_participants <- combined_meta %>%
@@ -30,6 +31,7 @@ glmer_df <- filter_participants |>
     cue = factor(cue)
   ) |>
   left_join(combined_meta %>%  dplyr::select(cue,type,strength_strat) %>% unique, by = "cue")
+
   
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues ###
@@ -49,14 +51,22 @@ glmer_df %>%
   get_summary_stats(rt, type = c('mean_sd')) %>%
   View()
 
+summary_rt <- glmer_df %>% 
+  group_by(condition) %>% 
+  summarize(
+    m = mean(rt),
+    s = sd(rt),
+    n = n(),
+    se = s/sqrt(n())
+  ) %>% 
+  View()
+
 
 ## Fit model with association strength and word-type (co or non-co) strata
-glmer_df_type <- glmer_df %>%
-  left_join(combined_meta %>% select(cue, type,strength_strat) %>% unique(), by = "cue")
 
 glmer_fit_wordtype <- glmer(
   rt ~ condition * type * strength_strat + (strength_strat:type|participant) + (1 | cue),
-  data = glmer_df_type,
+  data = glmer_df,
   family = inverse.gaussian("identity")
 )
   
