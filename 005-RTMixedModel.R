@@ -87,10 +87,12 @@ plot_glmer <- glmer_df %>%
 
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
-  geom_errorbar(aes(ymin = mean-se, ymax =mean+se))
-
-
-
+  geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.5,size = 1)+
+  scale_fill_manual(values = c("#FFD966","#62409D","#FDD023","#9365B7"))+
+  theme_bw(base_size = 20)+
+  labs(y = "mean response time",
+       title = "Condition Response Times"
+       )
 
 
 
