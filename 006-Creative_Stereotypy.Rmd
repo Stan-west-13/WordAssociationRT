@@ -622,6 +622,74 @@ short_se <- aov(proportion ~ score + Error(participant/score),
                     subset = condition == "short")
 summary(short_se)
 
+#######################
+# New plots for poster 
+######################
+
+# Analysis for creative plot
+
+## Variance among groups - failed to reject null that groups have equal variance p > .05
+ggplot(creative_csonly_corrected, aes(x= condition, y = creative_count_corrected)) +
+  geom_boxplot()
+
+bartlett.test(creative_count_corrected ~ condition, data = creative_csonly_corrected)
+
+## ezANOVA - sig difference between conditions; failed to reject null for levene's so equal variance
+creative_model <- ezANOVA(
+  data = creative_csonly_corrected,
+  wid = participant,
+  between = condition,
+  dv = creative_count_corrected,
+  detailed = T
+)
+creative_model
+
+c_model <- aov(creative_count_corrected ~ condition, data = creative_csonly_corrected)
+summary(c_model)
+
+## Post-hoc - sig difference between creative-child and creative-peer
+creative_csonly_corrected %>%
+  emmeans_test(creative_count_corrected ~ condition, p.adjust.method = "tukey")
+
+# Plot for creative count corrected
+library(ggsignif)
+plot_creative_c <- creative_csonly_corrected %>% 
+  group_by(condition) %>% 
+  summarize(mean = mean(creative_count_corrected),
+            sd = sd(creative_count_corrected),
+            n = length(creative_count_corrected),
+            se = sd(creative_count_corrected)/sqrt(length(creative_count_corrected))) %>%
+  mutate(condition = factor(condition, 
+                            levels = c("peer",
+                                       "child",
+                                       "short",
+                                       "creative")))
+
+ggplot(plot_creative_c, aes(x = condition, y = mean, fill = condition)) + 
+  geom_col()+
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.1, linewidth = .75, size = 1)+
+  theme_bw(base_size = 25) +
+  coord_cartesian(ylim= c(0,30))+
+  scale_fill_manual(labels = c("peer", "child", "short", "creative") ,
+                                    values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
+  theme(plot.background = element_rect(fill = "#FCFBFF"))+
+  labs(y = "creative count",
+       title = "Condition Creative Count"
+       )+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.9)) +
+  ggsignif::geom_signif(stat="signif",
+                        position = "identity",
+                        comparisons = list(c("child","creative"),
+                                           c("peer","creative")),
+                        annotations = "**",
+                        textsize = 7,
+                        tip_length = .1,
+                        size = 1,
+                        y_position = c(25.5,28))
+
+ggsave(filename = 'creative_count_plot.png' ,width = 4.78, height = 7.5, dpi = 600, units = "in", device='png')
+
 
 ```
 
