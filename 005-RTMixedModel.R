@@ -30,7 +30,9 @@ glmer_df <- filter_participants |>
     condition = factor(condition, c("child", "peer", "short", "creative")),
     cue = factor(cue)
   ) |>
-  left_join(combined_meta %>%  dplyr::select(cue,type,strength_strat) %>% unique, by = "cue")
+  left_join(combined_meta %>%  dplyr::select(cue,type,strength_strat) %>% unique, by = "cue") %>%
+  mutate(type = as.factor(type),
+         strength_strat = as.factor(strength_strat))
 
   
 
@@ -65,13 +67,30 @@ summary_rt <- glmer_df %>%
 ## Fit model with association strength and word-type (co or non-co) strata
 
 glmer_fit_wordtype <- glmer(
-  rt ~ condition * type * strength_strat + (strength_strat:type|participant) + (1 | cue),
+  rt ~ condition * type * strength_strat  + (1 | cue),
   data = glmer_df,
   family = inverse.gaussian("identity")
 )
   
-
 summary(glmer_fit_wordtype)
+
+
+
+
+ggplot(glmer_df,aes(x = condition, y = rt,fill=type))+
+  stat_summary(geom = "bar", fun = "mean")+
+  facet_grid(~strength_strat)
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## Contrasts #######################################
