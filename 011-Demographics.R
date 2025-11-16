@@ -42,18 +42,17 @@ demo_summary$less_int <- round(demo_summary$less_int, 2)
 
 demo_table <- flextable(data = head(demo_summary),
                         col_keys = c('condition','col1', 'n', 'col2',
-                                     'mean_age', 'sd_age', 'min_age', 'max_age', 'NA_age', 'col3',
-                                     'weekly_int', 'less_int')) |> 
+                                     'mean_age', 'sd_age', 'min_age', 'max_age', 'col3',
+                                     'weekly_int')) |> 
                           width(j = 'col1', width = .2) |>
                           empty_blanks()
 
 demo_table <- demo_table %>% 
   add_header_row(., values = c('','', 'Age', 'Toddler Interaction'), 
-                 colwidths = c(2, 2, 6, 2)) %>% 
+                 colwidths = c(2, 2, 5, 1)) %>% 
   align(align = 'center', part = 'all') %>% 
   set_header_labels(., n = 'n(male)', mean_age = 'mean', sd_age = 'SD', min_age = 'min',
-                    max_age = 'max', NA_age = 'NA', weekly_int = '≥ Weekly', 
-                    less_int = '< Weekily') %>% 
+                    max_age = 'max', NA_age = 'NA', weekly_int = '≥ Weekly') %>% 
   bg(bg = '#FCFBFF', part = 'all') %>% 
   autofit(., add_w = 0, add_h = 0)
   

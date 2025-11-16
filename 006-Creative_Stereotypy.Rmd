@@ -395,9 +395,16 @@ ggplot(creative_csonly, aes(x = condition, y = creative_proportion, fill = condi
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
 # Plots for average corrected count for each condition
-ggplot(creative_csonly_corrected, aes(x = condition, y = creative_count_corrected, fill = condition)) + 
+ggplot(creative_csonly_corrected, aes(x = reorder(condition, creative_count_corrected), y = creative_count_corrected, fill = condition)) + 
   stat_summary(aes(y = creative_count_corrected), fun = "mean", geom = "bar") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75) + 
+  theme_minimal() +
+  scale_fill_manual(labels = c("peer", "child", "short", "creative") ,
+                                    values = c("#f0b400","#AEAEAE", "#9C8BFF", "#4A248E"))+
+  theme(plot.background = element_rect(fill = "#FCFBFF"))+
+  theme(legend.position = 'none')
+
+#AEAEAE #4A248E #9C8BFF
 
 # --ANOVA and pairwise for creative count
 c_count_model <- ezANOVA(data = creative_csonly,
@@ -490,9 +497,15 @@ ggplot(stereotypy_ssonly, aes(x = condition, y = stereotypy_proportion, fill = c
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
 
 # Plot for average corrected stereotypy count for each condition
-ggplot(stereotypy_ssonly_corrected, aes(x = condition, y = stereotypy_count_corrected, fill = condition)) + 
+ggplot(stereotypy_ssonly_corrected, aes(x = reorder(condition, -stereotypy_count_corrected), y = stereotypy_count_corrected, fill = condition)) + 
   stat_summary(aes(y = stereotypy_count_corrected), fun = "mean", geom = "bar") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75)
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = .1, linewidth = .75) +
+  theme_minimal() +
+  scale_fill_manual(labels = c("peer", "child", "short", "creative") ,
+                                    values = c("#f0b400","#AEAEAE", "#9C8BFF", "#4A248E"))+
+  theme(plot.background = element_rect(fill = "#FCFBFF"))
+
+#AEAEAE - peer
 
 # Plot for average corrected stereotypy proportion for each condition
 ggplot(stereotypy_ssonly_corrected, aes(x = condition, y = stereotypy_proportion_c, fill = condition)) + 
