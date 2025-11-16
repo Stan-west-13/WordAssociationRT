@@ -75,11 +75,20 @@ glmer_fit_wordtype <- glmer(
 summary(glmer_fit_wordtype)
 
 
+plot_glmer <- glmer_df %>%
+  group_by(condition) %>%
+  summarize(mean = mean(rt),
+            se = sd(rt)/sqrt(length(rt))) %>%
+  mutate(condition = factor(condition, 
+                            levels = c("peer",
+                                       "child",
+                                       "short",
+                                       "creative")))
 
+ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
+  geom_col()+
+  geom_errorbar(aes(ymin = mean-se, ymax =mean+se))
 
-ggplot(glmer_df,aes(x = condition, y = rt,fill=type))+
-  stat_summary(geom = "bar", fun = "mean")+
-  facet_grid(~strength_strat)
 
 
 
