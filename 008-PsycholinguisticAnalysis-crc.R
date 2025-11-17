@@ -259,18 +259,17 @@ p_points <- dplot |>
       Nletters = "Word Length")
   ))) +
   coord_cartesian(ylim = c(-0.2, 0.52))+
-  theme_bw(base_size = 25)+
-  theme(legend.position = 'none',
-        panel.background = element_blank()) +
-  scale_color_manual(values = c("#FDD023","#AEAEAE", "#613F9D"))+
-  theme(plot.background = element_rect(fill = "#FCFBFF"))+
+  theme_bw(base_size = 32)+
+  theme(legend.position = "none",
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  scale_color_manual(values = c("#f0b400","#AEAEAE", "#613F9D"))+
   labs(y = "mean difference",
        x = "condition contrast",
-       title = "Child-Oriented Language Across Conditions"
+       title = "Child-Oriented Language \n Across Conditions"
   ) +
-  geom_hline(yintercept = 0)
+  geom_hline(yintercept = 0, linetype = 'dashed', size = 1)
   
 
-ggsave(filename = 'coneffects_condition.png' ,width = 9.5, height = 9.5, dpi = 600, units = "in", device='png')
-
-  
+ggsave(filename = 'Figures/coneffects_condition.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
