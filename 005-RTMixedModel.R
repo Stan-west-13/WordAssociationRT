@@ -88,10 +88,10 @@ plot_glmer <- glmer_df %>%
 
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
-  geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = .75, size = 1)+
+  geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = 0.75)+
   scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
   coord_cartesian(ylim = c(0, 2750))+
-  theme_bw(base_size = 25)+
+  theme_bw(base_size = 32)+
   labs(y = "mean response time (ms)",
        title = "Condition Response Times"
        )+
@@ -109,17 +109,67 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
                         size = 1,
                         y_position = c(2100,2300,2600))
 
-ggsave(filename = 'rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
+
+
+
+
+ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
+  geom_col()+
+  geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = 0.75)+
+  scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
+  coord_cartesian(ylim = c(0, 2750))+
+  theme_bw(base_size = 32)+
+  labs(y = "mean response time (ms)",
+       title = "Condition Response Times"
+  )+
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5),
+        plot.background = element_blank(),
+        panel.background = element_blank())+
+  ggsignif::geom_signif(stat="signif",
+                        position = "identity",
+                        comparisons = list(c("peer","child"),
+                                           c("child","short"),
+                                           c("child","creative")),
+                        annotations = c("***"),
+                        textsize = 7,
+                        tip_length = .1,
+                        size = 1,
+                        y_position = c(2100,2300,2600))
+
+ggsave(filename = 'Figures/rt_plot_condition_lg.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
 
 
 
 
 
 
+ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
+  geom_col()+
+  geom_errorbar(aes(ymin = mean-1.96*se, ymax =mean+1.96*se),width = 0.1, linewidth = 0.75)+
+  scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
+  coord_cartesian(ylim = c(0, 2750))+
+  theme_bw(base_size = 32)+
+  labs(y = "mean response time (ms)",
+       title = "Condition Response Times"
+  )+
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5),
+        plot.background = element_blank(),
+        panel.background = element_blank())+
+  ggsignif::geom_signif(stat="signif",
+                        position = "identity",
+                        comparisons = list(c("peer","child"),
+                                           c("child","short"),
+                                           c("child","creative")),
+                        annotations = c("***"),
+                        textsize = 7,
+                        tip_length = .1,
+                        size = 1,
+                        y_position = c(2100,2300,2600))
 
-
-
-
+ggsave(filename = 'Figures/rt_plot_condition_lg_confint.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
 
 ## Contrasts #######################################
 contrasts(glmer_df$condition)
