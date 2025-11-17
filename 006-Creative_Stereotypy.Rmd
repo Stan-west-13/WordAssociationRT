@@ -686,7 +686,7 @@ ggplot(plot_creative_c, aes(x = condition, y = mean, fill = condition)) +
                         textsize = 7,
                         tip_length = .1,
                         size = 1,
-                        y_position = c(25.5,28))
+                        y_position = c(25,28))
 
 ggsave(filename = 'creative_count_plot.png' ,width = 4.78, height = 7.5, dpi = 600, units = "in", device='png')
 
