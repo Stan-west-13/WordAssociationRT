@@ -17,6 +17,7 @@ library(ez)
 library(pastecs)
 library(psych)
 library(tidyverse)
+library(emmeans)
 library(rstatix)
 ```
 
@@ -80,7 +81,7 @@ filter_participants_corrected <- filter_participants %>%
   
 
 norms_list <- filter_participants_corrected %>%
-  select(condition, cue, response, revision, corrected_response) %>%
+  dplyr::select(condition, cue, response, revision, corrected_response) %>%
   filter(condition == 'peer') %>% 
   filter(!is.na(response)) %>% 
   group_by(cue, response) %>% 
@@ -97,7 +98,7 @@ norms_list <- filter_participants_corrected %>%
 
 # used for sanity check for norms_list
 norms_list_corrected <- filter_participants %>%
-  select(condition, cue, response, revision) %>%
+  dplyr::select(condition, cue, response, revision) %>%
   filter(condition == 'peer') %>% 
   filter(response != "") %>%
   filter(response != "notsure", response != "idk") %>% 
@@ -111,10 +112,10 @@ norms_list_corrected <- filter_participants %>%
   arrange(cue, desc(frequency_corrected))
 
 norm_dic <- norms_list %>% 
-  select(cue,response, frequency_response, max_response)
+  dplyr::select(cue,response, frequency_response, max_response)
 
 norm_dic_corrected <- norms_list %>% 
-  select(cue, corrected_response, frequency_corrected, max_corrected) %>% 
+  dplyr::select(cue, corrected_response, frequency_corrected, max_corrected) %>% 
   distinct()
 
 ```
@@ -133,7 +134,7 @@ Here, I am implementing the corrected responses into this list and checking that
 ```{r}
 
 creative_list <- filter_participants_corrected %>% 
-  select(condition, participant, cue, response, corrected_response) %>% 
+  dplyr::select(condition, participant, cue, response, corrected_response) %>% 
   filter(condition == 'creative') %>% 
   filter(response != "") %>% 
   filter(response != "notsure", response != "idk", response != "notsre") %>%
@@ -179,7 +180,7 @@ norms_list %>%
 
 #stereotypy scores for peer:
 stereotypy_peer <- filter_participants %>%
-  select(participant, cue, response, condition) %>%
+  dplyr::select(participant, cue, response, condition) %>%
   filter(condition == 'peer') %>% 
   filter(response != "") %>%
   group_by(cue, response) %>% 
@@ -190,7 +191,7 @@ stereotypy_peer <- filter_participants %>%
   group_by(cue) %>% 
   mutate(stereotypy_score = as.integer(
     response %in% response[frequency_response == max(frequency_response, na.rm = TRUE)])) %>% 
-  select(-condition, -frequency_response)
+  dplyr::select(-condition, -frequency_response)
 
 ```
 
@@ -247,7 +248,7 @@ creative_all <- filter_participants_corrected %>%
   mutate(creative_proportion = creative_count/60, .after = creative_count) %>% 
   mutate(creative_proportion_c = creative_count_corrected/60, .after = creative_count_corrected) %>% 
   ungroup() %>% 
-  select(c(-cue_onset:-key, -response.start, -response.stop))
+  dplyr::select(c(-cue_onset:-key, -response.start, -response.stop))
 
 # Count of creative scores for all conditions with peer as reference
 creative_all %>% 
@@ -313,7 +314,7 @@ stereotypy_all <- filter_participants_corrected %>%
   #this adds the proportion of stereotypical responses per participant
   mutate(stereotypy_proportion = stereotypy_count/60, .after = stereotypy_count) %>% 
   mutate(stereotypy_proportion_c = stereotypy_count_corrected/60, .after = stereotypy_count_corrected) %>%
-  select(c(-cue_onset:-key, -response.start, -response.stop))
+  dplyr::select(c(-cue_onset:-key, -response.start, -response.stop))
 
 # Counting how many stereotypical responses for each condition
 stereotypy_all %>% 
@@ -362,11 +363,11 @@ pairwise.t.test(stereotypy_all$stereotypy_score, stereotypy_all$condition, paire
 
 # DF with only the participant, their condition, and their scores  
 creative_csonly <- creative_all %>% 
-  select(c(participant, condition, creative_count, creative_proportion)) %>% 
+  dplyr::select(c(participant, condition, creative_count, creative_proportion)) %>% 
   distinct() 
 
 creative_csonly_corrected <- creative_all %>% 
-  select(c(participant, condition, creative_count_corrected, creative_proportion_c)) %>% 
+  dplyr::select(c(participant, condition, creative_count_corrected, creative_proportion_c)) %>% 
   distinct()
 
 creative_csonly$condition = factor(creative_csonly$condition)
@@ -464,11 +465,11 @@ t.test(creative_csonly$creative_proportion[creative_csonly$condition == "peer"],
 
 # DF with only the participant, their condition, and their scores  
 stereotypy_ssonly <- stereotypy_all %>% 
-  select(c(participant, condition, stereotypy_count, stereotypy_proportion)) %>% 
+  dplyr::select(c(participant, condition, stereotypy_count, stereotypy_proportion)) %>% 
   distinct() 
 
 stereotypy_ssonly_corrected <- stereotypy_all %>% 
-  select(c(participant, condition, stereotypy_count_corrected, stereotypy_proportion_c)) %>% 
+  dplyr::select(c(participant, condition, stereotypy_count_corrected, stereotypy_proportion_c)) %>% 
   distinct()
 
 stereotypy_ssonly$condition = factor(stereotypy_ssonly$condition)
@@ -647,9 +648,12 @@ creative_model
 c_model <- aov(creative_count_corrected ~ condition, data = creative_csonly_corrected)
 summary(c_model)
 
+# Normality is questionable 
+shapiro.test(resid(c_model))
+
 ## Post-hoc - sig difference between creative-child and creative-peer
 creative_csonly_corrected %>%
-  emmeans_test(creative_count_corrected ~ condition, p.adjust.method = "tukey")
+  emmeans_test(creative_count_corrected ~ condition, p.adjust.method = "bonferroni")
 
 # Plot for creative count corrected
 library(ggsignif)
@@ -690,6 +694,79 @@ ggplot(plot_creative_c, aes(x = condition, y = mean, fill = condition)) +
 
 ggsave(filename = 'creative_count_plot.png' ,width = 4.78, height = 7.5, dpi = 600, units = "in", device='png')
 
+
+# Analysis for stereotypy scores
+
+## Variance among groups - failed to reject null that groups have equal variance p > .05
+ggplot(stereotypy_ssonly_corrected, aes(x= condition, y = stereotypy_count_corrected)) +
+  geom_boxplot()
+
+bartlett.test(stereotypy_count_corrected ~ condition, data = stereotypy_ssonly_corrected)
+
+## ezANOVA - sig difference between conditions; failed to reject levene's null
+stereotypy_model <- ezANOVA(
+  data = stereotypy_ssonly_corrected,
+  wid = participant,
+  between = condition,
+  dv = stereotypy_count_corrected,
+  detailed = T
+)
+stereotypy_model
+
+s_model <- aov(stereotypy_count_corrected ~ condition, data = stereotypy_ssonly_corrected)
+summary(s_model)
+
+# Normality is good
+shapiro.test(resid(s_model))
+
+## Post-hoc - sig difference 
+stereotypy_ssonly_corrected %>%
+  ungroup() %>% 
+  emmeans_test(stereotypy_count_corrected ~ condition, p.adjust.method = "bonferroni")
+
+# Plot for stereotypy
+plot_stereotypy_c <- stereotypy_ssonly_corrected %>% 
+  group_by(condition) %>% 
+  summarize(mean = mean(stereotypy_count_corrected),
+            sd = sd(stereotypy_count_corrected),
+            n = length(stereotypy_count_corrected),
+            se = sd(stereotypy_count_corrected)/sqrt(length(stereotypy_count_corrected))) %>%
+  mutate(condition = factor(condition, 
+                            levels = c("peer",
+                                       "child",
+                                       "short",
+                                       "creative")))
+
+ggplot(plot_stereotypy_c, aes(x = condition, y = mean, fill = condition)) + 
+  geom_col()+
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.1, linewidth = .75, size = 1)+
+  theme_bw(base_size = 25) +
+  coord_cartesian(ylim= c(0,30))+
+  scale_fill_manual(labels = c("peer", "child", "short", "creative") ,
+                                    values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
+  theme(plot.background = element_rect(fill = "#FCFBFF"))+
+  labs(y = "stereotypy count",
+       title = "Condition Stereotypy Count"
+       )+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.9)) +
+  ggsignif::geom_signif(stat="signif",
+                        position = "identity",
+                        comparisons = list(c("child","creative"),
+                                           c("peer", "short"),
+                                           c("peer","creative")),
+                        annotations = c("**", "**", "***"),
+                        textsize = 7,
+                        tip_length = .1,
+                        size = 1,
+                        y_position = c(21.5,26,29))
+
+ggsave(filename = 'stereotypy_count_plot.png' ,width = 4.78, height = 7.5, dpi = 600, units = "in", device='png')
+
+# Making table for stereoptypy
+library(apaTables)
+
+apa.ezANOVA.table(stereotypy_model, filename = "stereotypy_anova_table.doc")
 
 ```
 

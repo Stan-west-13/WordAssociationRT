@@ -173,9 +173,20 @@ p_points <- dplot |>
   filter(metric != "Nsyll") |>
   droplevels() |>
   ggplot(aes(x = condition_contrast, y = m, color = type)) +
-  geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 2, linewidth = 1.5) +
-  facet_wrap(vars(metric)) +
-  theme_bw(base_size = 36)
+  geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 1.75, linewidth = 1.5) +
+  facet_wrap(vars(metric), labeller = labeller(metric = c(
+    c(aoa = "Age of Acquisition",
+      Lg10CD = "Contextual Diversity",
+      Lg10WF = "Word Frequency",
+      Nletters = "Word Length")
+  ))) +
+  coord_cartesian(ylim = c(-0.2,0.55))+
+  theme_bw(base_size = 12)+
+  scale_color_manual(values = c("#FDD023", "#613F9D"))+
+  labs(y = "mean difference",
+       x = "condition contrast"
+  )
+  
 
 ggsave("within-cue-contrasts_pointrange.pdf", plot = p_points, width = 15, height = 12, units = "in", dpi = 300)
 
@@ -205,3 +216,61 @@ dplotBar |>
   geom_bar(stat = "identity", aes(), position = position_dodge(.9)) +
   geom_errorbar(aes(ymin = value_m - value_s, ymax = value_m + value_s), position = position_dodge(.9)) +
   facet_wrap(vars(metric), scale = "free_y")
+
+
+
+######################
+# Plot for poster
+#####################
+
+dplot <- filter_participants |>
+  filter(condition %in% c("peer", "short", "child")) |>
+  filter(!is.na(response)) |>
+  mutate(
+    condition = factor(condition, levels = c("child", "short", "peer")),
+    cue = as.factor(cue),
+    revision = if_else(is.na(revision), response, revision),
+    Nletters = nchar(revision)
+  ) |>
+  group_by(cue, condition) |>
+  summarize(across(c(Lg10WF, Lg10CD, aoa, Nletters, Nsyll), function(x) mean(x, na.rm = TRUE))) |>
+  pivot_longer(cols = Lg10WF:Nsyll, names_to = "metric", values_to = "value") |>
+  group_by(metric, cue) |>
+  summarize(
+    pc = mean(value[condition == "peer"]) - mean(value[condition == "child"]),
+    ps = mean(value[condition == "peer"]) - mean(value[condition == "short"]),
+    sc = mean(value[condition == "short"]) - mean(value[condition == "child"])
+  ) |>
+  group_by(metric) |>
+  summarize(across(c(pc, ps, sc), list(m= ~ mean(.x, na.rm = T), s = ~ sd(.x, na.rm = T), se =  ~ sd(.x, na.rm = T) / sqrt(60)))) |>
+  pivot_longer(cols = pc_m:sc_se, names_to = c("condition_contrast", "stat"), names_sep = "_", values_to = "value") |>
+  pivot_wider(id_cols = c(metric, condition_contrast), names_from = stat, values_from = value) |>
+  ungroup()
+
+p_points <- dplot |>
+  filter(metric != "Nsyll") |>
+  droplevels() |>
+  ggplot(aes(x = condition_contrast, y = m, color = condition_contrast)) +
+  geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 1.5, linewidth = 1.5) +
+  facet_wrap(vars(metric), labeller = labeller(metric = c(
+    c(aoa = "Age of Acquisition",
+      Lg10CD = "Contextual Diversity",
+      Lg10WF = "Word Frequency",
+      Nletters = "Word Length")
+  ))) +
+  coord_cartesian(ylim = c(-0.2, 0.52))+
+  theme_bw(base_size = 25)+
+  theme(legend.position = 'none',
+        panel.background = element_blank()) +
+  scale_color_manual(values = c("#FDD023","#AEAEAE", "#613F9D"))+
+  theme(plot.background = element_rect(fill = "#FCFBFF"))+
+  labs(y = "mean difference",
+       x = "condition contrast",
+       title = "Child-Oriented Language Across Conditions"
+  ) +
+  geom_hline(yintercept = 0)
+  
+
+ggsave(filename = 'coneffects_condition.png' ,width = 9.5, height = 9.5, dpi = 600, units = "in", device='png')
+
+  
