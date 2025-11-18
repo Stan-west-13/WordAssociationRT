@@ -3,7 +3,7 @@ library(purrr)
 library(tidyr)
 library(ggplot2)
 
-d <- readRDS("tmp-data/filter-participants-corrected.rds")
+d <- readRDS("filter-participants-corrected.rds")
 
 d_list <- d |>
   select(condition, participant, cue, corrected_response) |>
@@ -74,3 +74,22 @@ x |>
   geom_hline(yintercept = 0, linetype = "dotted") +
   geom_pointrange(aes(ymin = mean_diff_p_creative - ci, ymax = mean_diff_p_creative + ci)) +
   theme_classic()
+
+
+
+
+x2 <- x %>%
+  group_by(participant) %>%
+  mutate(creative_count = sum(is_creative))
+
+m <- aov(creative_count ~ condition, data = x2)
+summary(m)
+
+emmeans_test(creative_count ~ condition,
+             data = x2 %>%
+               ungroup(),
+             comparisons = list(c("peer","child"),c("short","child"),c("creative","child")),
+             p.adjust.method = "bonferroni")
+
+
+

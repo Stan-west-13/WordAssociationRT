@@ -127,8 +127,8 @@ anovas <- map(dependent_variables, function(dv, cue_averages) {
         data = cue_averages,
         dv = .dv,
         wid = cue,
-        within = condition,
-        between = type
+        within = condition#,
+      #  between = type
       ), list(.dv = dv))),
     posthocs = map(posthoc_contrasts, function(ph_contr, dv) {
       eval(substitute(ezANOVA(
@@ -137,12 +137,15 @@ anovas <- map(dependent_variables, function(dv, cue_averages) {
           droplevels(),
         dv = .dv,
         wid = cue,
-        within = condition,
-        between = type
+        within = condition#,
+        #between = type
       ), list(.dv = dv)))
     }, dv = dv)
   )
 }, cue_averages = davg)
+
+
+
 
 dplot <- filter_participants |>
   filter(condition %in% c("peer", "short", "child")) |>
