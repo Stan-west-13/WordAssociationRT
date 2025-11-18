@@ -225,8 +225,34 @@ dplotBar |>
 ######################
 # Plot for poster
 #####################
+d_avg2 <- filter_participants_psychling |>
+  dplyr::select(condition, cue, aoa, Lg10WF, Lg10CD, Nletters) |>
+  tidyr::pivot_longer(cols = aoa:Nletters, names_to = "metric", values_to = "value") |>
+  dplyr::group_by(condition, cue, metric) |>
+  dplyr::summarize(m = mean(value, na.rm = TRUE)) |>
+  tidyr::pivot_wider(id_cols = c(metric, cue), names_from = condition, values_from = m)
 
-dplot <- filter_participants |>
+d_avg_grouped <- group_by(d_avg1, metric)
+
+ttests <- d_avg_grouped |>
+  group_split() |>
+  map(~{
+    list(
+      child_peer = t.test(.x$child, .x$peer, paired = TRUE),
+      child_short = t.test(.x$child, .x$short, paired = TRUE),
+      peer_short = t.test(.x$peer, .x$short, paired = TRUE)
+    )
+  })
+
+names(ttests) <- group_keys(d_avg_grouped)$metric
+
+ttests$Nletters$child_peer
+
+
+dplot_crc <- filter_participants |>
+  select(condition, cue, )
+
+dplot <- filter_participants_psychling |>
   filter(condition %in% c("peer", "short", "child")) |>
   filter(!is.na(response)) |>
   mutate(
@@ -240,32 +266,30 @@ dplot <- filter_participants |>
   pivot_longer(cols = Lg10WF:Nsyll, names_to = "metric", values_to = "value") |>
   group_by(metric, cue) |>
   summarize(
-    pc = mean(value[condition == "peer"]) - mean(value[condition == "child"]),
-    ps = mean(value[condition == "peer"]) - mean(value[condition == "short"]),
-    sc = mean(value[condition == "short"]) - mean(value[condition == "child"])
+    cp = mean(value[condition == "child"]) - mean(value[condition == "peer"]),
+    sp = mean(value[condition == "short"]) - mean(value[condition == "peer"]),
+    cs = mean(value[condition == "child"]) - mean(value[condition == "short"])
   ) |>
   group_by(metric) |>
-  summarize(across(c(pc, ps, sc), list(m= ~ mean(.x, na.rm = T), s = ~ sd(.x, na.rm = T), se =  ~ sd(.x, na.rm = T) / sqrt(60)))) |>
-  pivot_longer(cols = pc_m:sc_se, names_to = c("condition_contrast", "stat"), names_sep = "_", values_to = "value") |>
+  summarize(across(c(cp, sp, cs), list(m= ~ mean(.x, na.rm = T), s = ~ sd(.x, na.rm = T), se =  ~ sd(.x, na.rm = T) / sqrt(60)))) |>
+  pivot_longer(cols = cp_m:cs_se, names_to = c("condition_contrast", "stat"), names_sep = "_", values_to = "value") |>
   pivot_wider(id_cols = c(metric, condition_contrast), names_from = stat, values_from = value) |>
   ungroup()
 
 p_points <- dplot |>
   filter(metric != "Nsyll") |>
   droplevels() |>
+  mutate(
+    condition_contrast = factor(condition_contrast, levels = c("cp", "sp", "cs"), labels = c("child-peer", "short-peer", "child-short")),
+    metric = factor(metric, levels = c("aoa", "Nletters", "Lg10CD", "Lg10WF"), labels = c("Age of Acquisition", "Word Length", "Contextual Diversity", "Word Frequency"))
+  ) |>
   ggplot(aes(x = condition_contrast, y = m, color = condition_contrast)) +
   geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 1.5, linewidth = 1.5) +
-  facet_wrap(vars(metric), labeller = labeller(metric = c(
-    c(aoa = "Age of Acquisition",
-      Lg10CD = "Contextual Diversity",
-      Lg10WF = "Word Frequency",
-      Nletters = "Word Length")
-  ))) +
-  coord_cartesian(ylim = c(-0.2, 0.52))+
-  theme_bw(base_size = 32)+
+  facet_wrap(vars(metric)) +
+  theme_classic(base_size = 32)+
   theme(legend.position = "none",
-        plot.background = element_blank(),
-        panel.background = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 30, hjust = 1),
         plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = c("#f0b400","#AEAEAE", "#613F9D"))+
   labs(y = "mean difference",
@@ -275,4 +299,4 @@ p_points <- dplot |>
   geom_hline(yintercept = 0, linetype = 'dashed', size = 1)
   
 
-ggsave(filename = 'Figures/coneffects_condition.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/context_effects_condition-crc-revised2.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
