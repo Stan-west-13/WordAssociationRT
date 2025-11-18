@@ -15,6 +15,7 @@ temp_df <- read_xlsx('Demographics_TTA.xlsx')
 #########################
 
 demo_df <- temp_df %>%
+  filter(!subject_id %in% c("TTA_067","TTA_068")) %>% 
   mutate_at(c('subject_id', 'condition', 'education', 'gender', 'income', 'race', 'ethnicity', 
               'parent', 'toddler_interaction', 'toddler_int_frequency'), as.factor)
 
