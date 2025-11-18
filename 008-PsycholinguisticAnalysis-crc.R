@@ -225,14 +225,14 @@ dplotBar |>
 ######################
 # Plot for poster
 #####################
-d_avg2 <- filter_participants_psychling |>
+d_avg <- filter_participants_psychling |>
   dplyr::select(condition, cue, aoa, Lg10WF, Lg10CD, Nletters) |>
   tidyr::pivot_longer(cols = aoa:Nletters, names_to = "metric", values_to = "value") |>
   dplyr::group_by(condition, cue, metric) |>
   dplyr::summarize(m = mean(value, na.rm = TRUE)) |>
   tidyr::pivot_wider(id_cols = c(metric, cue), names_from = condition, values_from = m)
 
-d_avg_grouped <- group_by(d_avg1, metric)
+d_avg_grouped <- group_by(d_avg, metric)
 
 ttests <- d_avg_grouped |>
   group_split() |>
