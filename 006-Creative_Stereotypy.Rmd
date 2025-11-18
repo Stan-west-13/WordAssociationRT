@@ -747,7 +747,7 @@ ggplot(plot_stereotypy_c, aes(x = condition, y = mean, fill = condition)) +
   scale_fill_manual(labels = c("peer", "child", "short", "creative") ,
                                     values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
   labs(y = "stereotypy count",
-       title = "Condition \n Stereotypy Counts"
+       title = "Condition \n Stereotypy Count"
        )+
   theme(legend.position = "none",
         plot.background = element_blank(),
