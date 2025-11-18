@@ -3,75 +3,12 @@ library(purrr)
 library(tidyr)
 library(ggplot2)
 
+
 creativity <- readRDS("tmp-data/creativity-all.rds")
 stereotypy <- readRDS("tmp-data/stereotypy-all.rds")
 
-x <- creativity |>
-  count(condition, cue, corrected_response) |>
-  group_by(condition, cue) |>
-  summarize(score = mean(n == 1)) |>
-  group_by() |>
-  pivot_wider(id_cols = cue, names_from = condition, values_from = score)
-
-x_contr <- x |>
-  mutate(
-    child_peer = child - peer,
-    child_short = child - short,
-    child_creative = child - creative,
-    peer_short = peer - short,
-    peer_creative = peer - creative,
-    short_creative = short - creative
-  ) |>
-  select(-child, -peer, -short, -creative) |>
-  pivot_longer(
-    cols = c(child_peer:short_creative),
-    names_to = "contrast",
-    values_to = "scorediff"
-  )
-
-x_contr_avg <- x_contr |>
-  group_by(contrast) |>
-  summarize(
-    mean_diff = mean(scorediff),
-    s = sd(scorediff),
-    se = s / sqrt(n()),
-    ci = qt(.025, 60 - 4, lower.tail = FALSE) * se
-  ) |>
-  ungroup()
-
-x_contr_avg |>
-  mutate(
-    contrast = factor(
-      contrast,
-      levels = c(
-        "child_peer",
-        "child_short",
-        "peer_short",
-        "child_creative",
-        "peer_creative",
-        "short_creative"
-      ),
-      labels = c(
-        "child-peer",
-        "child-short",
-        "peer-short",
-        "child-creative",
-        "creative-peer",
-        "creative-short"
-      )
-    )
-  ) |>
-  ggplot(aes(x = contrast, y = mean_diff)) +
-    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci)) +
-    geom_hline(yintercept = 0, linetype = "dotted") +
-    ylab("Within-cue creativity difference") +
-    theme_classic() +
-    theme(
-      axis.title.x = element_blank()
-    )
-
                
-
+# Original scoring, but within-cue contrasts  ----
 d <- list(
   creativity = creativity |>
     mutate(score = if_else(condition == "peer", c_score_peer_corrected, creative_score_corrected)) |>
@@ -149,4 +86,68 @@ d_contr_avg |>
       axis.title.x = element_blank()
     )
 
-               
+
+# New way of scoring, also within-cue contrasts ----
+x <- creativity |>
+  count(condition, cue, corrected_response) |>
+  group_by(condition, cue) |>
+  summarize(score = mean(n == 1)) |>
+  group_by() |>
+  pivot_wider(id_cols = cue, names_from = condition, values_from = score)
+
+x_contr <- x |>
+  mutate(
+    child_peer = child - peer,
+    child_short = child - short,
+    child_creative = child - creative,
+    peer_short = peer - short,
+    peer_creative = peer - creative,
+    short_creative = short - creative
+  ) |>
+  select(-child, -peer, -short, -creative) |>
+  pivot_longer(
+    cols = c(child_peer:short_creative),
+    names_to = "contrast",
+    values_to = "scorediff"
+  )
+
+x_contr_avg <- x_contr |>
+  group_by(contrast) |>
+  summarize(
+    mean_diff = mean(scorediff),
+    s = sd(scorediff),
+    se = s / sqrt(n()),
+    ci = qt(.025, 60 - 4, lower.tail = FALSE) * se
+  ) |>
+  ungroup()
+
+x_contr_avg |>
+  mutate(
+    contrast = factor(
+      contrast,
+      levels = c(
+        "child_peer",
+        "child_short",
+        "peer_short",
+        "child_creative",
+        "peer_creative",
+        "short_creative"
+      ),
+      labels = c(
+        "child-peer",
+        "child-short",
+        "peer-short",
+        "child-creative",
+        "creative-peer",
+        "creative-short"
+      )
+    )
+  ) |>
+  ggplot(aes(x = contrast, y = mean_diff)) +
+    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci)) +
+    geom_hline(yintercept = 0, linetype = "dotted") +
+    ylab("Within-cue creativity difference") +
+    theme_classic() +
+    theme(
+      axis.title.x = element_blank()
+    )
