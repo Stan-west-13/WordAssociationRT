@@ -40,6 +40,27 @@ x_contr_avg <- x_contr |>
   ungroup()
 
 x_contr_avg |>
+  mutate(
+    contrast = factor(
+      contrast,
+      levels = c(
+        "child_peer",
+        "child_short",
+        "peer_short",
+        "child_creative",
+        "peer_creative",
+        "short_creative"
+      ),
+      labels = c(
+        "child-peer",
+        "child-short",
+        "peer-short",
+        "child-creative",
+        "peer_creative",
+        "short_creative"
+      )
+    )
+  ) |>
   ggplot(aes(x = contrast, y = mean_diff)) +
     geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci))
 
