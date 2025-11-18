@@ -56,13 +56,19 @@ x_contr_avg |>
         "child-short",
         "peer-short",
         "child-creative",
-        "peer_creative",
-        "short_creative"
+        "creative-peer",
+        "creative-short"
       )
     )
   ) |>
   ggplot(aes(x = contrast, y = mean_diff)) +
-    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci))
+    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci)) +
+    geom_hline(yintercept = 0, linetype = "dotted") +
+    ylab("Within-cue creativity difference") +
+    theme_classic() +
+    theme(
+      axis.title.x = element_blank()
+    )
 
                
 
@@ -80,7 +86,7 @@ d <- list(
     select(participant, condition, cue, response = corrected_response, score = stereotypy_score_corrected)
 ) |>
   list_rbind(names_to = "metric") |>
-  mutate(metric = as.factor(metric))
+  mutate(metric = factor(metric, c("stereotypy", "creativity")))
 
 d_contr <- d |>
   group_by(metric, condition, cue) |>
@@ -112,8 +118,35 @@ d_contr_avg <- d_contr |>
   ungroup()
 
 d_contr_avg |>
+  mutate(
+    contrast = factor(
+      contrast,
+      levels = c(
+        "child_peer",
+        "child_short",
+        "peer_short",
+        "child_creative",
+        "peer_creative",
+        "short_creative"
+      ),
+      labels = c(
+        "child-peer",
+        "child-short",
+        "peer-short",
+        "child-creative",
+        "creative-peer",
+        "creative-short"
+      )
+    )
+  ) |>
   ggplot(aes(x = contrast, y = mean_diff)) +
     geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci)) +
-    facet_grid(vars(metric))
+    geom_hline(yintercept = 0, linetype = "dotted") +
+    facet_grid(vars(metric)) +
+    ylab("Within-cue difference") +
+    theme_classic() +
+    theme(
+      axis.title.x = element_blank()
+    )
 
                
