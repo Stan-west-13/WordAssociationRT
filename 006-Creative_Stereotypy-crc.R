@@ -80,8 +80,7 @@ d_contr_avg <- d_contr |>
   ungroup()
 
 ci_d_contr_avg <- d_contr_avg %>% 
-  mutate(ci_plus =  ci + mean_diff,
-         ci_neg = ci - mean_diff)
+  mutate(ci_neg = mean_diff-ci, ci_plus =  mean_diff+ci)
 
 d_contr_avg |>
   mutate(
