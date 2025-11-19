@@ -286,10 +286,12 @@ p_points <- dplot |>
   ggplot(aes(x = condition_contrast, y = m, color = condition_contrast)) +
   geom_pointrange(aes(ymin = m - ((se*2)), ymax = (m) + (se*2)), position = position_dodge(.7), size = 1.5, linewidth = 1.5) +
   facet_wrap(vars(metric)) +
-  theme_classic(base_size = 32)+
+  theme_bw(base_size = 32)+
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle = 30, hjust = 1),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) +
   scale_color_manual(values = c("#f0b400","#AEAEAE", "#613F9D"))+
   labs(y = "mean difference",
@@ -299,4 +301,4 @@ p_points <- dplot |>
   geom_hline(yintercept = 0, linetype = 'dashed', size = 1)
   
 
-ggsave(filename = 'Figures/context_effects_condition-crc-revised2.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/context_effects_condition-crc-revised2.png' ,width = 9.77, height = 8.94, dpi = 600, units = "in", device='png')

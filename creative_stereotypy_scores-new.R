@@ -6,11 +6,11 @@ library(ggplot2)
 d <- readRDS("filter-participants-corrected.rds")
 
 d_list <- d |>
-  select(condition, participant, cue, corrected_response) |>
+  dplyr::select(condition, participant, cue, corrected_response) |>
   split(d$condition)
 
 d |>
-  select(condition, participant, cue, corrected_response) |>
+  dplyr::select(condition, participant, cue, corrected_response) |>
   group_by(condition, cue) |>
   summarize(n = n_distinct(participant)) |>
   pivot_wider(id_cols = cue, names_from = condition, values_from = n)

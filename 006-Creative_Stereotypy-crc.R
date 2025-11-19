@@ -12,7 +12,7 @@ stereotypy <- readRDS("tmp-data/stereotypy-all.rds")
 d <- list(
   creativity = creativity |>
     mutate(score = if_else(condition == "peer", c_score_peer_corrected, creative_score_corrected)) |>
-    select(
+    dplyr::select(
       participant,
       condition,
       cue,
@@ -20,7 +20,7 @@ d <- list(
       score
     ),
   stereotypy = stereotypy |>
-    select(participant, condition, cue, response = corrected_response, score = stereotypy_score_corrected)
+    dplyr::select(participant, condition, cue, response = corrected_response, score = stereotypy_score_corrected)
 ) |>
   list_rbind(names_to = "metric") |>
   mutate(metric = factor(metric, c("stereotypy", "creativity")))
@@ -55,7 +55,7 @@ d_contr <- d_avg |>
     peer_creative = peer - creative,
     short_creative = short - creative
   ) |>
-  select(-child, -peer, -short, -creative) |>
+  dplyr::select(-child, -peer, -short, -creative) |>
   pivot_longer(
     cols = c(child_peer:short_creative),
     names_to = "contrast",
@@ -125,7 +125,7 @@ x_contr <- x |>
     peer_creative = peer - creative,
     short_creative = short - creative
   ) |>
-  select(-child, -peer, -short, -creative) |>
+  dplyr::select(-child, -peer, -short, -creative) |>
   pivot_longer(
     cols = c(child_peer:short_creative),
     names_to = "contrast",
