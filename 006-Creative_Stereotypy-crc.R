@@ -79,8 +79,24 @@ d_contr_avg <- d_contr |>
   ) |>
   ungroup()
 
+d_contr_avg_creative <- d_contr %>% 
+  group_by(metric, contrast) %>% 
+  summarize(
+    mean_diff = mean(scorediff),
+    s = sd(scorediff),
+    se = s / sqrt(n()),
+    tval = mean_diff / se,
+    df = 60 - 1,
+    pval = pt(tval, 60-1, lower.tail = TRUE) * 2,
+    ci = qt(.025, 60 - 1, lower.tail = TRUE) * se
+  ) %>% 
+  ungroup()
+
 ci_d_contr_avg <- d_contr_avg %>% 
   mutate(ci_neg = mean_diff-ci, ci_plus =  mean_diff+ci)
+
+ci_d_contr_avg_creative <- d_contr_avg_creative %>% 
+  mutate(ci_neg = mean_diff+ci, ci_plus =  mean_diff-ci)
 
 d_contr_avg |>
   mutate(
