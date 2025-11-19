@@ -25,7 +25,25 @@ d <- list(
   list_rbind(names_to = "metric") |>
   mutate(metric = factor(metric, c("stereotypy", "creativity")))
 
-d_contr <- d |>
+d_avg <- d |>
+  group_by(metric, condition, cue) |>
+  summarize(score = mean(score))
+
+
+d_avg_grouped <- group_by(d_avg, metric)
+
+d_aov_list <- d_avg_grouped |>
+  group_split() |>
+  map(~{
+    aov(score ~ condition + Error(cue / condition), data = .x)
+  })
+
+names(d_aov_list) <- group_keys(d_avg_grouped)$metric
+
+map(d_aov_list, summary)
+
+  
+d_contr <- d_avg |>
   group_by(metric, condition, cue) |>
   summarize(score = mean(score)) |>
   pivot_wider(id_cols = c(metric, cue), names_from = condition, values_from = score) |>
