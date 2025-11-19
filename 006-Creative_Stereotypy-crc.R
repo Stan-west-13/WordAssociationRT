@@ -42,6 +42,10 @@ names(d_aov_list) <- group_keys(d_avg_grouped)$metric
 
 map(d_aov_list, summary)
 
+# g eta ^2
+# stereotypy
+0.7176/(0.7176 + 1.4271)
+
   
 d_contr <- d_avg |>
   group_by(metric, condition, cue) |>
@@ -75,6 +79,10 @@ d_contr_avg <- d_contr |>
   ) |>
   ungroup()
 
+ci_d_contr_avg <- d_contr_avg %>% 
+  mutate(ci_plus =  ci + mean_diff,
+         ci_neg = ci - mean_diff)
+
 d_contr_avg |>
   mutate(
     contrast = factor(
@@ -97,15 +105,21 @@ d_contr_avg |>
       )
     )
   ) |>
-  ggplot(aes(x = contrast, y = mean_diff)) +
-    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci)) +
-    geom_hline(yintercept = 0, linetype = "dotted") +
+  ggplot(aes(x = contrast, y = mean_diff, color = metric)) +
+    geom_pointrange(aes(ymin = mean_diff - ci, ymax = mean_diff + ci), position = position_dodge(.7), size = 1.5, linewidth = 1.5) +
+    geom_hline(yintercept = 0, linetype = "dotted", size = 1) +
     facet_grid(vars(metric)) +
     ylab("Within-cue difference") +
-    theme_classic() +
+    scale_color_manual(values = c("#f0b400","#613F9D"))+
+    theme_bw(base_size = 12) +
     theme(
-      axis.title.x = element_blank()
+      axis.title.x = element_blank(),
+      legend.position = "none",
+      plot.background = element_blank(),
+      axis.text.x = element_text(angle = 30, hjust = 1),
+      panel.background = element_blank()
     )
+ggsave(filename = 'Figures/stereotypy_condition-crc.png' ,width = 9.77, height = 7.3, dpi = 600, units = "in", device='png')
 
 
 # New way of scoring, also within-cue contrasts ----
