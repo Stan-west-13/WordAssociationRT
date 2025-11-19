@@ -69,9 +69,9 @@ d_contr_avg <- d_contr |>
     s = sd(scorediff),
     se = s / sqrt(n()),
     tval = mean_diff / se,
-    df = 60 - 4,
-    pval = pt(tval, 60-4, lower.tail = FALSE) * 2,
-    ci = qt(.025, 60 - 4, lower.tail = FALSE) * se
+    df = 60 - 1,
+    pval = pt(tval, 60-1, lower.tail = FALSE) * 2,
+    ci = qt(.025, 60 - 1, lower.tail = FALSE) * se
   ) |>
   ungroup()
 
@@ -139,9 +139,9 @@ x_contr_avg <- x_contr |>
     s = sd(scorediff),
     se = s / sqrt(n()),
     tval = mean_diff / se,
-    df = 60 - 4,
-    pval = pt(tval, 60-4, lower.tail = FALSE) * 2,
-    ci = qt(.025, 60 - 4, lower.tail = FALSE) * se
+    df = 60 - 1,
+    pval = pt(tval, 60-1, lower.tail = FALSE) * 2,
+    ci = qt(.025, 60 - 1, lower.tail = FALSE) * se
   ) |>
   ungroup()
 
