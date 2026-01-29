@@ -72,7 +72,7 @@ d_contr_avg <- d_contr |>
     mean_diff = mean(scorediff),
     s = sd(scorediff),
     se = s / sqrt(n()),
-    tval = mean_diff / se,
+    tval = abs(mean_diff / se),
     df = 60 - 1,
     pval = pt(tval, 60-1, lower.tail = FALSE) * 2,
     ci = qt(.025, 60 - 1, lower.tail = FALSE) * se
@@ -115,8 +115,8 @@ d_contr_avg |>
         "child-short",
         "peer-short",
         "child-creative",
-        "creative-peer",
-        "creative-short"
+        "peer-creative",
+        "short-creative"
       )
     )
   ) |>
@@ -126,7 +126,7 @@ d_contr_avg |>
     facet_grid(vars(metric)) +
     ylab("Within-cue difference") +
     scale_color_manual(values = c("#f0b400","#613F9D"))+
-    theme_bw(base_size = 12) +
+    theme_bw(base_size = 32) +
     theme(
       axis.title.x = element_blank(),
       legend.position = "none",
