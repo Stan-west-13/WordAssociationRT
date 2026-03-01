@@ -38,7 +38,8 @@ filter_participants_corrected <- filter_participants %>%
          .after = revision) %>% 
   filter(response != "") %>%
   filter(response != "notsure", response != "idk", response != "notsre") %>% 
-  filter(corrected_response != cue)
+  filter(corrected_response != cue) %>% 
+  relocate(condition, .after = participant)
 
 
 ##########################################
@@ -72,11 +73,12 @@ norms_list <- filter_participants_corrected %>%
 ## This will be used for creativity scores. 
 norms_dict <- norms_list %>% 
   select(condition, cue, response, corrected_response, frequency_response, max_response,
-         frequency_corrected, max_corrected)
+         frequency_corrected, max_corrected) 
 
 
-##################
+############################################
 # Save out .rds of what is needed for scores
+############################################
 
 #filter_participants_corrected
 saveRDS(filter_participants_corrected, paste0("Score_Scripts/rds_data/filter_corrected_",Sys.Date(),".rds"))
@@ -87,9 +89,6 @@ saveRDS(norms_list, paste0("Score_Scripts/rds_data/norms_list_",Sys.Date(),".rds
 #norms_dict
 saveRDS(norms_dict, paste0("Score_Scripts/rds_data/norms_dict_",Sys.Date(),".rds"))
 
-# I think that for creativity, if you add ' & (condition == norm_dic$condition)
-# to what is at lines 236 and 237, I think you could have condition in the norm_dic
-# to reference. you would also have to add it to the group by
 
 
 
