@@ -55,49 +55,37 @@ filter_participants_corrected <- filter_participants %>%
 ## to elicit the most stereotypical responses. 
 norms_list <- filter_participants_corrected %>%
   select(condition, cue, response, revision, corrected_response) %>%
-  filter(condition == 'peer') %>% 
-  group_by(cue, response) %>% 
-  mutate(frequency_response = n()) %>%
-  group_by(cue) %>% 
-  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
-  group_by(cue, corrected_response) %>% 
-  mutate(frequency_corrected = n()) %>% 
-  group_by(cue) %>% 
-  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
-  ungroup() %>% 
-  distinct() %>% 
-  arrange(cue, desc(frequency_response), desc(frequency_corrected))
-
-### Working on this further tomorrow. (extra df is temporary until I finish testing it)
-norms_list2 <- filter_participants_corrected %>%
-  select(condition, cue, response, revision, corrected_response) %>%
   group_by(condition, cue, response) %>% 
   mutate(frequency_response = n()) %>%
   group_by(cue) %>% 
-  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
-  group_by(cue, corrected_response) %>% 
+  mutate(max_response = ifelse(frequency_response == max(frequency_response[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE)) %>% 
+  group_by(condition, cue, corrected_response) %>% 
   mutate(frequency_corrected = n()) %>% 
   group_by(cue) %>% 
-  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
+  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE)) %>%
   ungroup() %>% 
   distinct() %>% 
   arrange(cue, desc(frequency_response), desc(frequency_corrected))
 
 # Norms Dictionary
 
-## I will work on merging these two into one df tomorrow.
+## This will be used for creativity scores. 
+norms_dict <- norms_list %>% 
+  select(condition, cue, response, corrected_response, frequency_response, max_response,
+         frequency_corrected, max_corrected)
 
-norm_dic <- norms_list %>% 
-  select(cue,response, frequency_response, max_response)
-
-norm_dic_corrected <- norms_list %>% 
-  select(cue, corrected_response, frequency_corrected, max_corrected) %>% 
-  distinct()
 
 ##################
-# Save out .rds of what is needed 
-# Still need norm_dic to reference cue-response pairings
+# Save out .rds of what is needed for scores
 
+#filter_participants_corrected
+saveRDS(filter_participants_corrected, paste0("Score_Scripts/rds_data/filter_corrected_",Sys.Date(),".rds"))
+
+#norm_list
+saveRDS(norms_list, paste0("Score_Scripts/rds_data/norms_list_",Sys.Date(),".rds"))
+
+#norms_dict
+saveRDS(norms_dict, paste0("Score_Scripts/rds_data/norms_dict_",Sys.Date(),".rds"))
 
 # I think that for creativity, if you add ' & (condition == norm_dic$condition)
 # to what is at lines 236 and 237, I think you could have condition in the norm_dic
