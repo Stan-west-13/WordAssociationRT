@@ -89,7 +89,9 @@ emmeans_test(creative_count ~ condition,
              data = x2 %>%
                ungroup(),
              comparisons = list(c("peer","child"),c("short","child"),c("creative","child")),
-             p.adjust.method = "bonferroni")
+             p.adjust.method = "bonferroni",
+             conf.level = 0.95,
+             detailed = TRUE)
 
 
 
