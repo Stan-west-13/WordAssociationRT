@@ -25,6 +25,7 @@ norms_list <- readRDS("Score_Scripts/rds_data/norms_list_2026-03-01.rds")
 creative_all <- filtered_corrected %>% 
   relocate(strength_strat, .before = aoa) %>%
   relocate(type, .after = strength_strat) %>% 
+  # creating frequency columns in this df as well to check creative scores
   group_by(condition, cue, response) %>% 
   mutate(frequency_response = n(), .after = response) %>%
   group_by(cue) %>% 
