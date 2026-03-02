@@ -138,7 +138,7 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
                         size = 1,
                         y_position = c(2100,2300,2600))
 
-ggsave(filename = 'Figures/rt_plot_condition_lg.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/rt_plot_condition_lg.png' ,width = 9.27, height = 10.42, dpi = 600, units = "in", device='png')
 
 
 
@@ -169,7 +169,7 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
                         size = 1,
                         y_position = c(2100,2300,2600))
 
-ggsave(filename = 'Figures/rt_plot_condition_lg_confint.png' ,width = 9.27, height = 11.42, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/rt_plot_condition_lg_confint.png' ,width = 9.27, height = 10.42, dpi = 600, units = "in", device='png')
 
 ## Contrasts #######################################
 contrasts(glmer_df$condition)
