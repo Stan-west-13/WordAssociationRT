@@ -15,7 +15,7 @@ norms_list <- readRDS("Score_Scripts/rds_data/norms_list_2026-03-01.rds")
 ##################
 
 ## Creative scores are decided by whether or not a given cue-response pair is unique among 
-## cue-responses pairs given in EACH CONDITION. In other words, if the frequency of the 
+## cue-response pairs given in EACH CONDITION. In other words, if the frequency of the 
 ## cue-responses pair is 1, then that cue-responses pair is judged as creative in that condition. 
 ## Given our definition of creative that we give to participants (a responses they think would be 
 ## uncommon among other players), and this would be relative to players under each condition (e.g. 
@@ -28,16 +28,15 @@ creative_all <- filtered_corrected %>%
   # creating frequency columns in this df as well to check creative scores
   group_by(condition, cue, response) %>% 
   mutate(frequency_response = n(), .after = response) %>%
-  group_by(cue) %>% 
-  mutate(max_response = ifelse(frequency_response == max(frequency_response[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE), 
+  group_by(condition, cue) %>% 
+  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE),
          .after = frequency_response) %>% 
   group_by(condition, cue, corrected_response) %>% 
   mutate(frequency_corrected = n(), .after = corrected_response) %>% 
-  group_by(cue) %>% 
-  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE),
+  group_by(condition, cue) %>% 
+  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE),
          .after = frequency_corrected) %>%
   ungroup() %>% 
-  distinct() %>% 
   arrange(cue, desc(frequency_response), desc(frequency_corrected)) %>% 
   # this adds creative scores for both uncorrected and corrected responses
   group_by(participant, cue) %>% 

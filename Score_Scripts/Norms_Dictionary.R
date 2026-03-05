@@ -48,22 +48,23 @@ filter_participants_corrected <- filter_participants %>%
 
 # Norms List 
 
-## This norms list has both frequency and the most commonly given
-## cue response pair for EACH CONDITION. The columns max_response 
-## and max_corrected are only used when doing stereotypy scoring.
-## So, these two columns reflect the cue-response pair made the 
-## most in the PEER condition since the peer condition is thought 
-## to elicit the most stereotypical responses. 
+## This norms list has the frequency and the most commonly given
+## cue-response pair for EACH CONDITION. The columns frequency_response
+## and frequency_corrected have the number of cue-response pairs made
+## WITHIN each condition. The columns max_response and max_corrected 
+## reflect the most commonly given cue-response pair for EACH condition.
+## The latter two columns are used for the stereotypy score. 
+ 
 norms_list <- filter_participants_corrected %>%
   select(condition, cue, response, revision, corrected_response) %>%
   group_by(condition, cue, response) %>% 
   mutate(frequency_response = n()) %>%
-  group_by(cue) %>% 
-  mutate(max_response = ifelse(frequency_response == max(frequency_response[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE)) %>% 
+  group_by(condition, cue) %>% 
+  mutate(max_response = ifelse(frequency_response == max(frequency_response), TRUE, FALSE)) %>% 
   group_by(condition, cue, corrected_response) %>% 
   mutate(frequency_corrected = n()) %>% 
-  group_by(cue) %>% 
-  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected[condition == 'peer']) & (condition == 'peer'), TRUE, FALSE)) %>%
+  group_by(condition, cue) %>% 
+  mutate(max_corrected = ifelse(frequency_corrected == max(frequency_corrected), TRUE, FALSE)) %>%
   ungroup() %>% 
   distinct() %>% 
   arrange(cue, desc(frequency_response), desc(frequency_corrected))
