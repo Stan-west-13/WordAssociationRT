@@ -1,4 +1,3 @@
-load("psychling/responses_metadata_2025-04-26_reformatted.Rdata") 
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -9,83 +8,79 @@ library(lmerTest)
 library(statmod)
 library(fitdistrplus)
 library(rstatix)
+library(codingMatrices)
 library(ggsignif)
-## Remove outliers and convert rt to miliseconds ####################
-filter_participants <- combined_meta %>%
-  filter(!participant %in% c("TTA_067","TTA_068")) %>%
-  mutate(rt = rt *1000)
+source("R/Load_Helpers.R")
+
+## Load data
+d <- load_most_recent_by_mtime("data", "TTA_response_mapped")
 
 
 ## Filter out responses faster than 250ms and responses that are more than 
-## 2.5 standard deviations away from participant mean ########################
-glmer_df <- filter_participants |>
-  dplyr::select(participant,condition,rt,cue) |>
-  filter(rt > 250) |>
+## 2 standard deviations away from participant mean, and participants
+## 2 standard deviations away from condition grand means ########################
+filter_participants <- d %>%
+  dplyr::select(participant,condition,cue_rt_mili,cue) |>
+  filter(cue_rt_mili > 250, !participant == "TTA_067") |>
   group_by(participant) |>
-  mutate(z_rt_pp = (rt - mean(rt))/sd(rt))|>
-  filter(z_rt_pp < 2.5) |>
+  mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili),
+         pp_mean = mean(cue_rt_mili))|>
+  group_by(condition) |>
+  mutate(cond_mean = mean(cue_rt_mili),
+         cond_sd = sd(cue_rt_mili)) |>
+  group_by(participant, .add = T) |>
+  mutate(z_overall = (pp_mean - cond_mean)/cond_sd) |>
+  filter(abs(z_rt_pp) < 2,abs(z_overall) <2) |>
   ungroup() |>
   mutate(
     participant = as.factor(participant),
-    condition = factor(condition, c("child", "peer", "short", "creative")),
+    condition = factor(condition, c("peer", "child", "short", "creative")),
+    condition_diff = condition,
     cue = factor(cue)
-  ) |>
-  left_join(combined_meta %>%  dplyr::select(cue,type,strength_strat) %>% unique, by = "cue") %>%
-  mutate(type = as.factor(type),
-         strength_strat = as.factor(strength_strat))
+  )
 
-  
+saveRDS(filter_participants, file = paste0("TTA_response_mapped_meta_filtered",Sys.Date(),".rds"))
 
-## Fit linear mixed model with fixed effect of condition and random intercepts for cues ###
+## Add column for difference contrasted conditions
+contrasts(filter_participants$condition_diff) <- code_diff(4)
+
+
+## Fit linear mixed model with fixed effect of condition and random intercepts for cues and participant ###
 glmer_fit <- glmer(
-  rt ~ condition + (1 | cue),
-  data = glmer_df,
+  cue_rt_mili ~ condition + (condition | cue) + (1|participant),
+  data = filter_participants,
   family = inverse.gaussian("identity")
 )
 
 summary(glmer_fit)
 
-
-
-## group means for plot may 2025
-glmer_df %>%
-  group_by(condition) %>%
-  get_summary_stats(rt, type = c('mean_sd')) %>%
-  View()
-
-summary_rt <- glmer_df %>% 
-  group_by(condition) %>% 
-  summarize(
-    m = mean(rt),
-    s = sd(rt),
-    n = n(),
-    se = s/sqrt(n())
-  ) %>% 
-  View()
-
-
-## Fit model with association strength and word-type (co or non-co) strata
-
-glmer_fit_wordtype <- glmer(
-  rt ~ condition * type * strength_strat  + (1 | cue),
-  data = glmer_df,
+## Fit linear mixed model above, but with difference contrasts.
+glmer_fit_diff <- glmer(
+  cue_rt_mili ~ condition_diff + (1| cue) + (1|participant),
+  data = filter_participants,
   family = inverse.gaussian("identity")
 )
-  
-summary(glmer_fit_wordtype)
 
+summary(glmer_fit_diff)
 
-plot_glmer <- glmer_df %>%
+## group means and sd
+filter_participants %>%
   group_by(condition) %>%
-  summarize(mean = mean(rt),
-            n = length(rt),
-            se = sd(rt)/sqrt(length(rt))) %>%
+  get_summary_stats(cue_rt_mili, type = c('mean_sd')) 
+
+
+## Plot averages with standard error bars
+plot_glmer <- filter_participants %>%
+  group_by(condition) %>%
+  summarize(mean = mean(cue_rt_mili),
+            n = length(cue_rt_mili),
+            se = sd(cue_rt_mili)/sqrt(length(cue_rt_mili))) %>%
   mutate(condition = factor(condition, 
                             levels = c("peer",
                                        "child",
                                        "short",
                                        "creative")))
-
+## Wide plot
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
   geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = 0.75)+
@@ -108,12 +103,11 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
                         tip_length = .1,
                         size = 1,
                         y_position = c(2100,2300,2600))
-
+## Save plot
 ggsave(filename = 'Figures/rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
 
 
-
-
+## Long plot
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
   geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = 0.75)+
@@ -141,10 +135,7 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
 ggsave(filename = 'Figures/rt_plot_condition_lg.png' ,width = 9.27, height = 10.42, dpi = 600, units = "in", device='png')
 
 
-
-
-
-
+## Confidence interval plot
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
   geom_errorbar(aes(ymin = mean-1.96*se, ymax =mean+1.96*se),width = 0.1, linewidth = 0.75)+
@@ -172,20 +163,20 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
 ggsave(filename = 'Figures/rt_plot_condition_lg_confint.png' ,width = 9.27, height = 10.42, dpi = 600, units = "in", device='png')
 
 ## Contrasts #######################################
-contrasts(glmer_df$condition)
+contrasts(filter_participants$condition)
 model.matrix(glmer_fit)
 
 
 ## Plotting model fit ##############################
 q <- list(
-  invgauss = fitdist(glmer_df$rt, distr = "invgauss",
+  invgauss = fitdist(filter_participants$cue_rt_mili, distr = "invgauss",
                      start = list(mean=700, dispersion=300, shape=1)),
-  gamma = fitdist(glmer_df$rt, dist = "gamma"),
-  normal = fitdist(glmer_df$rt, dist = "norm")
+  #gamma = fitdist(filter_participants$cue_rt_mili, dist = "gamma"),
+  normal = fitdist(filter_participants$cue_rt_mili, dist = "norm")
 )
 ix <- seq(250, 10000, length.out = 1000)
 
-plot(density(glmer_df$rt), lwd = 3, main = NA)
+plot(density(filter_participants$cue_rt_mili), lwd = 3, main = NA)
 points(
   ix,
   dinvgauss(
@@ -196,15 +187,15 @@ points(
   ),
   col = "red", type = "l", lwd = 3
 )
-points(
-  ix,
-  dgamma(
-    ix,
-    shape = q$gamma$estimate["shape"],
-    rate = q$gamma$estimate["rate"]
-  ),
-  col = "blue", type = "l", lwd = 3
-)
+# points(
+#   ix,
+#   dgamma(
+#     ix,
+#     shape = q$gamma$estimate["shape"],
+#     rate = q$gamma$estimate["rate"]
+#   ),
+#   col = "blue", type = "l", lwd = 3
+# )
 points(
   ix,
   dnorm(
@@ -222,11 +213,11 @@ legend(
 )
 
 
-
-plot_df <- glmer_df %>%
+## Factorizing conditions into rule vs context. 
+plot_df <- filter_participants %>%
   mutate(plot_fac = ifelse(condition == "child" | condition == "peer", "context", "rule"))
 
-ggplot(plot_df ,aes(x = plot_fac, y = rt, fill = condition))+
+ggplot(plot_df ,aes(x = plot_fac, y = cue_rt_mili, fill = condition))+
   stat_summary(position = "dodge", geom = "bar", fun = "mean") +
   labs(title = "Response Time by Context Condition",
        y = "response time",
