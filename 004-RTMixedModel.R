@@ -20,16 +20,11 @@ d <- load_most_recent_by_mtime("data", "TTA_response_mapped_meta-")
 ## 2 standard deviations away from participant mean, and participants
 ## 2 standard deviations away from condition grand means ########################
 filter_participants <- d %>%
-  filter(cue_rt_mili > 250, !participant == "TTA_067") |>
+  filter(cue_rt_mili > 250) |>
+  filter(!nchar == 0) |>
   group_by(participant) |>
-  mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili),
-         pp_mean = mean(cue_rt_mili))|>
-  group_by(condition) |>
-  mutate(cond_mean = mean(cue_rt_mili),
-         cond_sd = sd(cue_rt_mili)) |>
-  group_by(participant, .add = T) |>
-  mutate(z_overall = (pp_mean - cond_mean)/cond_sd) |>
-  filter(abs(z_rt_pp) < 2,abs(z_overall) <2) |>
+  mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili))|>
+  filter(z_rt_pp < 2.5) |>
   ungroup() |>
   mutate(
     participant = as.factor(participant),
@@ -46,7 +41,7 @@ contrasts(filter_participants$condition_diff) <- code_diff(4)
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues and participant ###
 glmer_fit <- glmer(
-  cue_rt_mili ~ condition + (condition | cue) + (1|participant),
+  cue_rt_mili ~ condition + (1 | cue) + (1|participant),
   data = filter_participants,
   family = inverse.gaussian("identity")
 )
