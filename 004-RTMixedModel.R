@@ -39,7 +39,7 @@ filter_participants <- d %>%
     cue = factor(cue)
   )
 
-saveRDS(filter_participants, file = paste0("TTA_response_mapped_meta_filtered",Sys.Date(),".rds"))
+saveRDS(filter_participants, file = paste0("data/TTA_response_mapped_meta_filtered-",Sys.Date(),".rds"))
 
 ## Add column for difference contrasted conditions
 contrasts(filter_participants$condition_diff) <- code_diff(4)
