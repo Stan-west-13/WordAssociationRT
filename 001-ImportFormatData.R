@@ -32,6 +32,7 @@ data_source <- choose_directory()
 
 ## Combine data over participants
 pp_files <- list.files(data_source,full.names = TRUE)
-combined <- combine_files(pp_files)
+combined <- combine_files(pp_files) %>%
+  select(participant, date, condition, cue, response, cue_onset,cue_offset = textPrompt.stopped, cue_rt = key_resp_cue.rt, response.start, response.stop )
 
 saveRDS(combined, file = paste0("data/TTA_combined_responses-",Sys.Date(),".rds"))
