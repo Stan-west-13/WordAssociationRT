@@ -13,14 +13,13 @@ library(ggsignif)
 source("R/Load_Helpers.R")
 
 ## Load data
-d <- load_most_recent_by_mtime("data", "TTA_response_mapped")
+d <- load_most_recent_by_mtime("data", "TTA_response_mapped_meta-")
 
 
 ## Filter out responses faster than 250ms and responses that are more than 
 ## 2 standard deviations away from participant mean, and participants
 ## 2 standard deviations away from condition grand means ########################
 filter_participants <- d %>%
-  dplyr::select(participant,condition,cue_rt_mili,cue) |>
   filter(cue_rt_mili > 250, !participant == "TTA_067") |>
   group_by(participant) |>
   mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili),
