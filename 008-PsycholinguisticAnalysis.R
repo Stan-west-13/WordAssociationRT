@@ -4,6 +4,7 @@ library(ggplot2)
 library(ez)
 library(purrr)
 library(lme4)
+library(rstatix)
 library(lmerTest)
 library(statmod)
 library(fitdistrplus)
@@ -16,7 +17,7 @@ z <- function(x){
 
 
 d <- load_most_recent_by_mtime("data","filtered")  %>%
-  mutate(nchar = log10(nchar),
+  mutate(#nchar = log10(nchar),
          wf_z = z(Lg10WF),
          aoa_z = z(aoa),
          wl_z = z(nchar),

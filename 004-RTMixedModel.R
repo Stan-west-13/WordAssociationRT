@@ -81,6 +81,8 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
   coord_cartesian(ylim = c(0, 2750))+
   theme_bw(base_size = 32)+
+  geom_text(stat = "summary",fun = "mean",vjust = 12, aes(label = round(after_stat(y),2)),
+            position = position_dodge(0.9),size = 8)+
   labs(y = "mean response time (ms)",
        title = "Condition Response Times"
        )+
