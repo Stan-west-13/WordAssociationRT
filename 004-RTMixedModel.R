@@ -20,7 +20,7 @@ d <- load_most_recent_by_mtime("data", "TTA_response_mapped_meta-")
 ## 2 standard deviations away from participant mean, and participants
 ## 2 standard deviations away from condition grand means ########################
 filter_participants <- d %>%
-  filter(cue_rt_mili > 250) |>
+  filter(cue_rt_mili > 250,!participant == "TTA_067") |>
   filter(!nchar == 0) |>
   group_by(participant) |>
   mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili))|>
