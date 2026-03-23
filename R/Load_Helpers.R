@@ -17,7 +17,7 @@ load_most_recent_by_mtime <- function(directory, pattern = NULL, read_fun = read
   message("Loading most recently modified file: ", most_recent_file)
   
   # Load the file using the provided read function
-  return(read_fun(most_recent_file, ...))
+  return(read_fun(most_recent_file, ...) %>% tibble())
 }
 
 
