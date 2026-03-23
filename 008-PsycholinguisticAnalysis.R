@@ -8,6 +8,7 @@ library(rstatix)
 library(lmerTest)
 library(statmod)
 library(fitdistrplus)
+library(codingMatrices)
 library(stringr)
 source("R/Load_Helpers.R")
 
@@ -17,7 +18,7 @@ z <- function(x){
 
 
 d <- load_most_recent_by_mtime("data","filtered")  %>%
-  mutate(#nchar = log10(nchar),
+  mutate(nchar = log10(nchar),
          wf_z = z(Lg10WF),
          aoa_z = z(aoa),
          wl_z = z(nchar),
@@ -116,7 +117,7 @@ names(ttests) <- group_keys(d_avg_grouped)$metric
 ## Linear mixed models 
 ## Split dataframe along measure and normalized vs non-normalized dv
 d_long_filt_normalized <- d %>%
-  select(participant,
+  dplyr::select(participant,
          cue,
          condition,
          aoa_z,
@@ -129,7 +130,7 @@ d_long_filt_normalized <- d %>%
   drop_na()
 
 d_long_filt_nonnormalized <- d %>%
-  select(participant,
+  dplyr::select(participant,
          cue,
          condition,
          aoa,
@@ -156,12 +157,12 @@ mods <- imap(d_split, function(y,name){
       group_by(condition) %>%
       get_summary_stats(value, type = c("mean_se"))
     ## random intercepts for participants and cue
-    m_lmer <- lmer(value ~ condition + (1|cue) + (1|participant), data = x ) 
+    m_lmer <- lmer(value ~ condition + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name,"########################"))
     print(summary(m_lmer))
     
     contrasts(x$condition) <- code_diff(4)
-    m_lmer_diff <- lmer(value ~ condition  + (1|cue) + (1|participant), data = x ) 
+    m_lmer_diff <- lmer(value ~ condition  + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name," DIFF ","########################"))
     print(summary(m_lmer_diff))
   
