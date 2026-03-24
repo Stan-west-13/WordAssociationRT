@@ -28,6 +28,13 @@ response_d <- d %>%
                                TRUE,
                                FALSE)) %>%
   group_by(participant) %>%
-  mutate(prop_noresp = sum(((response == ""|is.na(response)) & low.response == FALSE))/n())
+  mutate(prop_noresp = sum(((response == ""|is.na(response)) & low.response == FALSE))/length(low.response == FALSE))
   
 
+## Cue responders
+ d %>%
+  group_by(cue) %>%
+  mutate(is_cue = ifelse(response == cue,TRUE,FALSE)) %>%
+  group_by(participant) %>%
+  mutate(sum_is_cue = sum(is_cue)) %>%
+  filter(sum_is_cue > 0) ## no cue responders
