@@ -18,6 +18,7 @@ z <- function(x){
 
 
 d <- load_most_recent_by_mtime("data","filtered")  %>%
+  filter(!participant == "TTA_061",!participant == "TTA_100",!condition == "creative") %>%
   mutate(nchar = log10(nchar),
          wf_z = z(Lg10WF),
          aoa_z = z(aoa),
@@ -155,7 +156,7 @@ mods <- imap(d_split, function(y,name){
   map(y, function(x){
     sum_stats <- x %>%
       group_by(condition) %>%
-      get_summary_stats(value, type = c("mean_se"))
+      get_summary_stats(value, type = c("mean_ci"))
     ## random intercepts for participants and cue
     m_lmer <- lmer(value ~ condition + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name,"########################"))
@@ -169,7 +170,7 @@ mods <- imap(d_split, function(y,name){
     
     g <- ggplot(sum_stats, aes(x = condition, y = mean, fill = condition))+
       stat_summary(fun = "identity", geom = "col", position = "dodge")+
-      geom_errorbar(aes(ymin = mean -se, ymax = mean+se,width = 0.2), position = "dodge")+
+      geom_errorbar(aes(ymin = mean -ci, ymax = mean+ci,width = 0.2), position = "dodge")+
       ggtitle(paste0("Barplot by Context ",unique(x$measure)))+
       theme_classic()
     
