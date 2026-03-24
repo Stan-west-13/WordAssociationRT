@@ -32,8 +32,8 @@ plot_df <- d %>%
                values_to = "value") %>% 
   relocate(c(measure, value), .after = condition)
 
-ggplot(plot_df, aes(x = condition, y = value))+
-  geom_bar(stat = "summary", fun = "mean")+
+ggplot(plot_df, aes(x = condition, y = value, fill = type))+
+  geom_bar(stat = "summary", fun = "mean", position = "dodge")+
   facet_wrap(~measure,scales = 'free')
 
 ## Looking at descriptive stats by condition for each measure
@@ -121,6 +121,7 @@ d_long_filt_normalized <- d %>%
   dplyr::select(participant,
          cue,
          condition,
+         type,
          aoa_z,
          wf_z,
          cd_z,
@@ -128,12 +129,14 @@ d_long_filt_normalized <- d %>%
   pivot_longer(cols = ends_with("_z"),
                names_to = "measure",
                values_to = "value") %>%
-  drop_na()
+  drop_na() %>%
+  mutate(type = as.factor(type))
 
 d_long_filt_nonnormalized <- d %>%
   dplyr::select(participant,
          cue,
          condition,
+         type,
          aoa,
          Lg10WF,
          Lg10CD,
@@ -141,7 +144,8 @@ d_long_filt_nonnormalized <- d %>%
   pivot_longer(cols = c("aoa",starts_with("Lg"),"nchar"),
                names_to = "measure",
                values_to = "value") %>%
-  drop_na()
+  drop_na() %>%
+  mutate(type = as.factor(type))
 
 lst_mods <- list(normalized = d_long_filt_normalized, nonnormal = d_long_filt_nonnormalized)
 
@@ -155,26 +159,34 @@ d_split <- map(lst_mods, function(x){
 mods <- imap(d_split, function(y,name){
   map(y, function(x){
     sum_stats <- x %>%
+<<<<<<< HEAD
       group_by(condition) %>%
+=======
+      group_by(condition,type) %>%
+>>>>>>> 499c0bd660053c2f49d26169e10802308c3e80f5
       get_summary_stats(value, type = c("mean_ci"))
     ## random intercepts for participants and cue
-    m_lmer <- lmer(value ~ condition + (1|cue) + (1|participant), data = x) 
+    m_lmer <- lmer(value ~ condition*type + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name,"########################"))
     print(summary(m_lmer))
     
     contrasts(x$condition) <- code_diff(4)
-    m_lmer_diff <- lmer(value ~ condition  + (1|cue) + (1|participant), data = x) 
+    m_lmer_diff <- lmer(value ~ condition*type  + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name," DIFF ","########################"))
     print(summary(m_lmer_diff))
   
     
-    g <- ggplot(sum_stats, aes(x = condition, y = mean, fill = condition))+
+    g <- ggplot(sum_stats, aes(x = condition, y = mean, fill = type))+
       stat_summary(fun = "identity", geom = "col", position = "dodge")+
+<<<<<<< HEAD
       geom_errorbar(aes(ymin = mean -ci, ymax = mean+ci,width = 0.2), position = "dodge")+
+=======
+      geom_errorbar(aes(ymin = mean -ci, ymax = mean+ci,width = 0.2), position = position_dodge(0.9))+
+>>>>>>> 499c0bd660053c2f49d26169e10802308c3e80f5
       ggtitle(paste0("Barplot by Context ",unique(x$measure)))+
       theme_classic()
     
-    return(list(model = m_lmer,model_helm = m_lmer_diff,plot(g)))
+    return(list(model = m_lmer,model_diff = m_lmer_diff,plot(g)))
   })
 })
 
