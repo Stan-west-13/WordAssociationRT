@@ -11,7 +11,7 @@ library(fitdistrplus)
 library(codingMatrices)
 library(stringr)
 source("R/Load_Helpers.R")
-
+## Separate criteria of filtering.
 z <- function(x){
   return((x - mean(x,na.rm = T))/sd(x,na.rm = T))
 }

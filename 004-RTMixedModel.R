@@ -10,6 +10,7 @@ library(fitdistrplus)
 library(rstatix)
 library(codingMatrices)
 library(ggsignif)
+library(merTools)
 source("R/Load_Helpers.R")
 
 ## Load data
@@ -20,15 +21,15 @@ d <- load_most_recent_by_mtime("data", "TTA_response_mapped_meta-")
 ## 2 standard deviations away from participant mean, and participants
 ## 2 standard deviations away from condition grand means ########################
 filter_participants <- d %>%
-  filter(cue_rt_mili > 200,!participant %in% c("TTA_067", "TTA_068", "TTA_100", "TTA_061")) |>
+  filter(cue_rt_mili > 200,!participant %in% c("TTA_067", "TTA_068")) |>
   filter(!nchar == 0) |>
   group_by(participant) |>
   mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili))|>
-  filter(z_rt_pp < 3) |>
+  filter(z_rt_pp < 2.5) |>
   ungroup() |>
   mutate(
     participant = as.factor(participant),
-    condition = factor(condition, c("peer", "child", "short", "creative")),
+    condition = factor(condition, c("child", "peer", "short", "creative")),
     condition_diff = condition,
     cue = factor(cue)
   )
@@ -41,7 +42,7 @@ contrasts(filter_participants$condition_diff) <- code_diff(4)
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues and participant ###
 glmer_fit <- glmer(
-  cue_rt_mili ~ condition + (1 | cue) + (1|participant),
+  cue_rt ~ condition + (1 | cue) + (1|participant),
   data = filter_participants,
   family = inverse.gaussian("identity")
 )
@@ -66,18 +67,16 @@ filter_participants %>%
 ## Plot averages with standard error bars
 plot_glmer <- filter_participants %>%
   group_by(condition) %>%
-  summarize(mean = mean(cue_rt_mili),
-            n = length(cue_rt_mili),
-            se = sd(cue_rt_mili)/sqrt(length(cue_rt_mili))) %>%
+  get_summary_stats(cue_rt_mili, type = "mean_ci")%>%
   mutate(condition = factor(condition, 
                             levels = c("peer",
                                        "child",
                                        "short",
                                        "creative")))
-## Wide plot
+## Wide plot ## compute se from model.
 ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
-  geom_errorbar(aes(ymin = mean-se, ymax =mean+se),width = 0.1, linewidth = 0.75)+
+  geom_errorbar(aes(ymin = mean-ci, ymax =mean+ci),width = 0.1, linewidth = 0.75)+
   scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
   coord_cartesian(ylim = c(0, 2750))+
   theme_bw(base_size = 32)+
