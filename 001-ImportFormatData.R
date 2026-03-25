@@ -32,10 +32,12 @@ data_source <- choose_directory()
 
 ## Combine data over participants
 pp_files <- list.files(data_source,full.names = TRUE)
+load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
 stim <- read.csv("psychling/stim_64_NNVB_wcuss.csv")
 combined <- combine_files(pp_files) %>%
-  select(participant, date, condition, cue, response, cue_onset,cue_offset = textPrompt.stopped, cue_rt = key_resp_cue.rt, response.start, response.stop ) %>%
-  mutate(cue_rt_mili = cue_rt * 1000) %>%
-  left_join(select(stim, cue, strength_strat,type), by = "cue")
+  dplyr::select(participant, date, condition, cue, response) %>%
+  left_join(combined_meta) %>%
+  mutate(rt_mili = rt * 1000) %>%
+  left_join(dplyr::select(stim, cue, strength_strat,type), by = "cue")
 
 saveRDS(combined, file = paste0("data/TTA_combined_responses-",Sys.Date(),".rds"))

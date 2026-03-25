@@ -14,19 +14,26 @@ library(merTools)
 source("R/Load_Helpers.R")
 
 ## Load data
-d <- load_most_recent_by_mtime("data", "TTA_response_mapped_meta-")
+d <- load_most_recent_by_mtime("data", "TTA_mapped_response_meta")
 
 
-## Filter out responses faster than 250ms and responses that are more than 
+## Filter out responses faster than 200ms and responses that are more than 
 ## 2 standard deviations away from participant mean, and participants
 ## 2 standard deviations away from condition grand means ########################
 filter_participants <- d %>%
-  filter(cue_rt_mili > 200,!participant %in% c("TTA_067", "TTA_068")) |>
-  filter(!nchar == 0) |>
+  filter(rt_mili > 200) |>
+  filter(!Nletters == 0) |>
   group_by(participant) |>
-  mutate(z_rt_pp = (cue_rt_mili - mean(cue_rt_mili))/sd(cue_rt_mili))|>
-  filter(z_rt_pp < 2.5) |>
-  ungroup() |>
+  mutate(pp_mean = mean(rt_mili),
+         pp_sd = sd(rt_mili),
+         z_rt_pp = (rt_mili - pp_mean)/pp_sd)|>
+  filter(z_rt_pp < 3) |>
+  group_by(condition) |>
+  mutate(mean_condition = mean(rt_mili),
+         sd_condition = sd(rt_mili),
+         z_mean_pp = (pp_mean-mean_condition)/sd_condition) %>%
+  ungroup() %>%
+  #filter(z_mean_pp <  2.5) %>%
   mutate(
     participant = as.factor(participant),
     condition = factor(condition, c("child", "peer", "short", "creative")),
@@ -42,7 +49,7 @@ contrasts(filter_participants$condition_diff) <- code_diff(4)
 
 ## Fit linear mixed model with fixed effect of condition and random intercepts for cues and participant ###
 glmer_fit <- glmer(
-  cue_rt ~ condition + (1 | cue) + (1|participant),
+  rt ~ condition + (1 | cue) + (1|participant),
   data = filter_participants,
   family = inverse.gaussian("identity")
 )
@@ -67,7 +74,7 @@ filter_participants %>%
 ## Plot averages with standard error bars
 plot_glmer <- filter_participants %>%
   group_by(condition) %>%
-  get_summary_stats(cue_rt_mili, type = "mean_ci")%>%
+  get_summary_stats(rt_mili, type = "mean_ci")%>%
   mutate(condition = factor(condition, 
                             levels = c("peer",
                                        "child",

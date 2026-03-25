@@ -17,17 +17,22 @@ z <- function(x){
 }
 
 
-d <- load_most_recent_by_mtime("data","filtered")  %>%
-  filter(!participant == "TTA_061",!participant == "TTA_100",!condition == "creative") %>%
-  mutate(nchar = log10(nchar),
+d <- load_most_recent_by_mtime("data","TTA_mapped_response_meta") |>
+  mutate(Nletters_lg10 = log10(Nletters),
          wf_z = z(Lg10WF),
          aoa_z = z(aoa),
-         wl_z = z(nchar),
-         cd_z = z(Lg10CD)) %>%
-  mutate(condition = relevel(condition,ref = "peer")) 
+         wl_z = z(Nletters),
+         cd_z = z(Lg10CD)) |>
+  mutate(condition = relevel(condition,ref = "peer")) |> 
+  filter(rt_mili > 200) |>
+  filter(!Nletters == 0) |>
+  group_by(participant) |>
+  mutate(z_rt_pp = (rt_mili - mean(rt_mili))/sd(rt_mili))|>
+  filter(z_rt_pp < 3) %>%
+  mutate(condition = factor(condition, levels = c("peer","child","short","creative")))
 ## Plotting measures
 plot_df <- d %>%
-  pivot_longer(cols = c("aoa", "Lg10WF", "Lg10CD","nchar","Nsyll"),
+  pivot_longer(cols = c("aoa", "Lg10WF", "Lg10CD","Nletters","Nsyll"),
                names_to = "measure",
                values_to = "value") %>% 
   relocate(c(measure, value), .after = condition)
@@ -140,8 +145,8 @@ d_long_filt_nonnormalized <- d %>%
          aoa,
          Lg10WF,
          Lg10CD,
-         nchar) %>%
-  pivot_longer(cols = c("aoa",starts_with("Lg"),"nchar"),
+         Nletters_lg10) %>%
+  pivot_longer(cols = c("aoa",starts_with("Lg"),"Nletters_lg10"),
                names_to = "measure",
                values_to = "value") %>%
   drop_na() %>%
@@ -159,30 +164,22 @@ d_split <- map(lst_mods, function(x){
 mods <- imap(d_split, function(y,name){
   map(y, function(x){
     sum_stats <- x %>%
-<<<<<<< HEAD
       group_by(condition) %>%
-=======
-      group_by(condition,type) %>%
->>>>>>> 499c0bd660053c2f49d26169e10802308c3e80f5
       get_summary_stats(value, type = c("mean_ci"))
     ## random intercepts for participants and cue
-    m_lmer <- lmer(value ~ condition*type + (1|cue) + (1|participant), data = x) 
+    m_lmer <- lmer(value ~ condition + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name,"########################"))
     print(summary(m_lmer))
     
     contrasts(x$condition) <- code_diff(4)
-    m_lmer_diff <- lmer(value ~ condition*type  + (1|cue) + (1|participant), data = x) 
+    m_lmer_diff <- lmer(value ~ condition  + (1|cue) + (1|participant), data = x) 
     print(paste("############## Model output for ", unique(x$measure),name," DIFF ","########################"))
     print(summary(m_lmer_diff))
   
     
-    g <- ggplot(sum_stats, aes(x = condition, y = mean, fill = type))+
+    g <- ggplot(sum_stats, aes(x = condition, y = mean))+
       stat_summary(fun = "identity", geom = "col", position = "dodge")+
-<<<<<<< HEAD
-      geom_errorbar(aes(ymin = mean -ci, ymax = mean+ci,width = 0.2), position = "dodge")+
-=======
       geom_errorbar(aes(ymin = mean -ci, ymax = mean+ci,width = 0.2), position = position_dodge(0.9))+
->>>>>>> 499c0bd660053c2f49d26169e10802308c3e80f5
       ggtitle(paste0("Barplot by Context ",unique(x$measure)))+
       theme_classic()
     

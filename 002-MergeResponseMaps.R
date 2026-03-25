@@ -2,7 +2,7 @@ library(RSQLite)
 library(dplyr)
 library(tidyverse)
 library(readxl)
-
+source("R/Load_Helpers.R")
 map_revisions_psychling <- function(orig_df, revision_df){
   for (i in 1:nrow(orig_df)){
     resp <- orig_df$response[i]
@@ -38,8 +38,8 @@ map_revisions_psychling <- function(orig_df, revision_df){
 }
 
 ## Load in data##################################################
-load("psychling/responses_metadata_2025-04-26_reformatted.Rdata")
-combined_meta$aoa <- combined_meta$AoA_Kup_lem
+d <- load_most_recent_by_mtime("data","TTA_combined_responses")
+d$aoa <- d$AoA_Kup_lem
 psychling <- read.csv("psychling/AoA_51715_words.csv")
 
 
@@ -77,22 +77,22 @@ response_revisions <- cues_responses %>%
   left_join(cues, by = c("cue_id" = "id")) %>%
   left_join(responses, by = c("response_id" = "id")) %>%
   left_join(response_maps %>% mutate(cue_response_id = as.integer(cue_response_id)), by = c("id" = "cue_response_id")) %>%
-  select(-id,-id.y, -cue_id.x,-cue_id.y,-response_id) %>%
+  dplyr::select(-id,-id.y, -cue_id.x,-cue_id.y,-response_id) %>%
   left_join(kup, by = c("kuperman_id" = "id")) %>%
-  left_join(sub %>% select(-word), by = c("subtlex_id" = "id")) %>%
-  select(cue,response,revision,aoa,Lg10WF,Lg10CD) %>%
+  left_join(sub %>% dplyr::select(-word), by = c("subtlex_id" = "id")) %>%
+  dplyr::select(cue,response,revision,aoa,Lg10WF,Lg10CD) %>%
   unique()
 ####################################################################
 
 ## Make dataframe of cues,responses, and revisions to translate to original dataframe
 response_revisions_only <- response_revisions %>%
   filter(!is.na(revision), !revision == "") %>%
-  left_join(psychling %>% select(Word,Nletters,Nphon,Nsyll), by = c("revision" = "Word"))
+  left_join(psychling %>% dplyr::select(Word,Nletters,Nphon,Nsyll), by = c("revision" = "Word"))
 ################################################################################
 
 ## Join revisions to original dataframe ############################
-combined_meta_revisions <- combined_meta %>%
-  left_join(select(response_revisions_only,cue,response,revision), by = c("cue","response"))
+combined_meta_revisions <- d %>%
+  left_join(dplyr::select(response_revisions_only,cue,response,revision), by = c("cue","response"))
 #############################################################################
 
 
@@ -103,15 +103,20 @@ meta_mapped <- map_revisions_psychling(combined_meta_revisions,response_revision
 
 ## Reorganize and select relevant columns
 combined_meta_mapped <- meta_mapped %>%
-  select(participant,cue,strength_strat,type,response,revision,aoa,Lg10WF,Lg10CD,Nletters,Nphon,Nsyll,rt,condition,
+  dplyr::select(participant,cue,strength_strat = strength_strat.x,type = type.x,response,revision,aoa,Lg10WF,Lg10CD,Nletters,Nphon,Nsyll,rt,rt_mili,condition,
          runningclock,cue_onset,cue_offset,key,response.start,response.stop,
          FREQcount,CDcount,FREQlow,Cdlow,SUBTLWF,SUBTLCD,Alternative.spelling,Freq_pm,Dom_PoS_SUBTLEX,
          Lemma_highest_PoS, AoA_Kup, Perc_known,Concreteness_mean,AoAinv_mean,Pknown_mean,nlettersinv_mean,R1_max,
-         date,expName,psychopyVersion,frameRate,expStart,Nobs,Prevalence,FreqZipfUS)
+         date,expName,psychopyVersion,frameRate,expStart,Nobs,Prevalence,FreqZipfUS) %>%
+  mutate(participant = as.factor(participant),
+         cue = as.factor(cue),
+         condition = as.factor(condition),
+         type = as.factor(type),
+         strength_strat = as.factor(strength_strat))
 
  
 ## Save out data #####################
-write_rds(combined_meta_mapped, file = paste0("psychling/mapped_response_metadata_",Sys.Date(),".rds"))
+write_rds(combined_meta_mapped, file = paste0("data/TTA_mapped_response_metadata_",Sys.Date(),".rds"))
 ###################
 
 
