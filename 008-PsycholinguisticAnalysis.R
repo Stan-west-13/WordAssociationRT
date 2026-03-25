@@ -187,6 +187,68 @@ mods <- imap(d_split, function(y,name){
   })
 })
 
+### Plot with correct SE
+
+d_plot <- d %>%
+  dplyr::select(condition,cue,response, c(aoa,Nletters,Lg10CD,Lg10WF)) %>%
+  pivot_longer(cols = c(aoa,Nletters,Lg10CD,Lg10WF),
+               names_to = "measure",
+               values_to = "value") %>%
+  group_by(condition,cue,measure) %>%
+  summarize(cue_mean = mean(value,na.rm = T)) %>%
+  pivot_wider(names_from = c(condition),
+              values_from = cue_mean) %>%
+  group_by(cue,measure) %>%
+  mutate(`child - peer` = child - peer,
+         `short - peer` = short - peer,
+         `child - short` = child - short,
+         `peer - creative` = peer - creative,
+         `child - creative` = child - creative,
+         `short - creative` = short - creative) %>%
+  pivot_longer(cols =  c("child - peer", 
+                         "short - peer", 
+                         "child - short",
+                         "peer - creative",
+                         "short - creative",
+                         "child - creative"),
+               names_to = "contrast",
+               values_to = "diff") %>%
+  pivot_longer(cols = c("child","peer","short","creative"),
+               names_to = "condition",
+               values_to = "value") %>%
+  group_by(contrast,measure) %>%
+  summarize(mean_diff = mean(diff),
+            se = sd(diff)/sqrt(n()),
+            CIL= mean_diff - (se*1.96),
+            CIU = mean_diff + (se*1.96)) %>%
+  mutate(contrast = factor(contrast, levels = c("child - peer", 
+                                                "short - peer", 
+                                                "child - short",
+                                                "peer - creative",
+                                                "short - creative",
+                                                "child - creative")),
+         measure = factor(measure, levels = c("aoa", "Nletters", "Lg10CD", "Lg10WF")))
+  
+
+ggplot(aes(x = contrast, y = mean_diff,color = contrast), data = d_plot) +
+  stat_summary(geom = "point", fun = "mean",size = 4)+
+  geom_errorbar(aes(ymin = CIL, ymax = CIU,width = 0),size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~measure,
+             nrow = 2,
+             ncol = 2, 
+             labeller = as_labeller(c("aoa" = "Age of Acquisition",
+                                      "Nletters" = "Word Length",
+                                      "Lg10CD" = "Contextual Diversity",
+                                      "Lg10WF" = "Frequency")))+
+  theme_bw(base_size = 18)+
+  theme(axis.text.x = element_text(angle = 45,hjust = 1))+
+  labs( x = "Contrast",
+        y = "raw difference (within-cue means)")
+ggsave("Figures/TTA_psychlong_contrasts.png", width = 12, height = 6)
+
+
+
 
 
 
