@@ -33,7 +33,7 @@ filter_participants <- d %>%
          sd_condition = sd(rt_mili),
          z_mean_pp = (pp_mean-mean_condition)/sd_condition) %>%
   ungroup() %>%
-  #filter(z_mean_pp <  2.5) %>%
+  filter(z_mean_pp <  2.5) %>%
   mutate(
     participant = as.factor(participant),
     condition = factor(condition, c("child", "peer", "short", "creative")),
@@ -56,14 +56,6 @@ glmer_fit <- glmer(
 
 summary(glmer_fit)
 
-## Fit linear mixed model above, but with difference contrasts.
-glmer_fit_diff <- glmer(
-  cue_rt_mili ~ condition_diff + (1| cue) + (1|participant),
-  data = filter_participants,
-  family = inverse.gaussian("identity")
-)
-
-summary(glmer_fit_diff)
 
 ## group means and sd
 filter_participants %>%
@@ -98,13 +90,12 @@ ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
   ggsignif::geom_signif(stat="signif",
                         position = "identity",
                         comparisons = list(c("peer","child"),
-                                           c("child","short"),
                                            c("child","creative")),
                         annotations = c("***"),
                         textsize = 7,
                         tip_length = .1,
                         size = 1,
-                        y_position = c(2100,2300,2600))
+                        y_position = c(2100,2600))
 ## Save plot
 ggsave(filename = 'Figures/rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
 
