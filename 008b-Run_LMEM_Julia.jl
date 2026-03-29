@@ -65,6 +65,8 @@ m_wl_short = fit(MixedModel,
     @formula(Nletters_lg10 ~ condition + (condition| cue) + (1 | participant)), 
     df)
 outfun(m_wl_short, "data/m_wl_short.csv")
+
+
 ## Function for CI and marginal means
 marginal_meanConfint = function(model,df, measure, outfile)
 # --- Step 1: Extract fixed effects coefficients, design matrix, and covariance matrices 
@@ -103,3 +105,4 @@ end
 marginal_meanConfint(m_aoa, df,:aoa,"data/marginal_means_aoa.csv")
 marginal_meanConfint(m_wf, df,:Lg10WF,"data/marginal_means_wf.csv")
 marginal_meanConfint(m_wl, df,:Nletters_lg10,"data/marginal_means_wl.csv")
+marginal_meanConfint(m_rt, df,:rt_mili,"data/marginal_means_rt.csv")

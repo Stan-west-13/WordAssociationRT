@@ -5,6 +5,7 @@ library(stringr)
 library(readxl)
 library(ggplot2)
 library(geomtextpath)
+library(Microsoft365R)
 source("R/Load_Helpers.R")
 ## Load functions
 combine_files <- function(files){
@@ -29,6 +30,10 @@ combine_files <- function(files){
 
 ## Choose data directory - OneDrive: Word Association RT study/data
 data_source <- choose_directory()
+
+## Server friendly
+data_source <- "OneDrive Data/data"
+
 
 ## Combine data over participants
 pp_files <- list.files(data_source,full.names = TRUE)

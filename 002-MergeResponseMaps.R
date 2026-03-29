@@ -1,6 +1,6 @@
 library(RSQLite)
 library(dplyr)
-library(tidyverse)
+library(tidyr)
 library(readxl)
 source("R/Load_Helpers.R")
 map_revisions_psychling <- function(orig_df, revision_df){
