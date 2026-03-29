@@ -98,8 +98,8 @@ anovas <- map(dependent_variables, function(dv,cue_averages) {
 
 ## Averages by metric wide formatted
 d_avg_met <- d |>
-  dplyr::select(condition, cue, aoa, Lg10WF, Lg10CD, nchar) |>
-  tidyr::pivot_longer(cols = aoa:nchar, names_to = "metric", values_to = "value") |>
+  dplyr::select(condition, cue, aoa, Lg10WF, Lg10CD, Nletters) |>
+  tidyr::pivot_longer(cols = aoa:Nletters, names_to = "metric", values_to = "value") |>
   dplyr::group_by(condition, cue, metric) |>
   dplyr::summarize(m = mean(value, na.rm = TRUE)) |>
   tidyr::pivot_wider(id_cols = c(metric, cue), names_from = condition, values_from = m)
