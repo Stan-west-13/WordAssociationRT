@@ -72,30 +72,35 @@ plot_glmer <- filter_participants %>%
                                        "child",
                                        "short",
                                        "creative")))
+
+
+modelmm <- read.csv("data/marginal_means_rt.csv") %>%
+  mutate(condition = factor(condition, levels = c("peer","child","short","creative")))
 ## Wide plot ## compute se from model.
-ggplot(plot_glmer, aes(x = condition, y = mean,fill=condition))+
+ggplot(modelmm, aes(x = condition, y = mean,fill=condition))+
   geom_col()+
-  geom_errorbar(aes(ymin = mean-ci, ymax =mean+ci),width = 0.1, linewidth = 0.75)+
+  geom_errorbar(aes(ymin = ci_lower, ymax =ci_upper),width = 0.1, linewidth = 0.75)+
   scale_fill_manual(values = c("#AEAEAE","#f0b400", "#9C8BFF", "#4A248E"))+
-  coord_cartesian(ylim = c(0, 2750))+
-  theme_bw(base_size = 32)+
-  geom_text(stat = "summary",fun = "mean",vjust = 12, aes(label = round(after_stat(y),2)),
-            position = position_dodge(0.9),size = 8)+
-  labs(y = "mean response time (ms)",
-       title = "Condition Response Times"
+  coord_cartesian(ylim = c(0, 3250))+
+  theme_bw(base_size = 24)+
+  geom_text(stat = "identity",vjust = 7, aes(label = round(after_stat(y),2)),
+            position = position_dodge(0.9),size = 6)+
+  labs(y = "model marginal means (95% CI)",
        )+
   theme(legend.position = "none",
+        axis.title.x = element_blank(),
         plot.title = element_text(hjust = 0.5),
         plot.background = element_rect(fill = "#FCFBFF"))+
   ggsignif::geom_signif(stat="signif",
                         position = "identity",
-                        comparisons = list(c("peer","child"),
-                                           c("child","creative")),
-                        annotations = c("***"),
+                        comparisons = list(c("short","creative"),
+                                           c("child","creative"),
+                                           c("creative","peer")),
+                        annotations = c(""),
                         textsize = 7,
                         tip_length = .1,
                         size = 1,
-                        y_position = c(2100,2600))
+                        y_position = c(2900,3000,3100))
 ## Save plot
 ggsave(filename = 'Figures/rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
 
