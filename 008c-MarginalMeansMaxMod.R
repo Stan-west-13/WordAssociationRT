@@ -17,7 +17,6 @@ df_marginal <- map_dfr(lst, function(x){
 
 d_plot <-df_marginal  %>%
     rename(CIU = ci_upper, CIL = ci_lower) %>%
-    group_by(condition,measure) %>%
     pivot_wider(names_from = c(condition),
                 values_from = c(mean,CIU,CIL)) %>%
     group_by(measure) %>%
