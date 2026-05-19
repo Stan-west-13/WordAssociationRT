@@ -14,8 +14,12 @@ temp_df <- read_xlsx('Demographics_TTA.xlsx')
 # Making new data frame
 #########################
 
+d_pp <-read_rds("data/TTA_response_mapped_meta_filtered-2026-03-24.rds") %>%
+  select(participant) %>%
+  unique()
+
 demo_df <- temp_df %>%
-  filter(!subject_id %in% c("TTA_067","TTA_068")) %>% 
+  filter(subject_id %in% d_pp$participant) %>% 
   mutate_at(c('subject_id', 'condition', 'education', 'gender', 'income', 'race', 'ethnicity', 
               'parent', 'toddler_interaction', 'toddler_int_frequency'), as.factor)
 
@@ -28,10 +32,11 @@ demo_summary <- demo_df %>%
             sd_age = sd(age, na.rm = T),
             min_age = min(age, na.rm = T),
             max_age = max(age, na.rm = T),
-            NA_age = sum(if_any(age, is.na)),
             weekly_int = sum(toddler_int_frequency %in% c('daily', 'weekly', 'few/week'))/ n(),
-            less_int = sum(toddler_int_frequency %in% c('monthly', 'rare', 'never'))/ n()
-            ) 
+            less_int = sum(toddler_int_frequency %in% c('monthly', 'rare', 'never'))/ n(),
+            prop_parent = sum(parent == "yes")/n(),
+            prop_todd_int = sum(toddler_interaction == "yes")/n())
+
 demo_summary$mean_age <- round(demo_summary$mean_age, 2)
 demo_summary$sd_age <- round(demo_summary$sd_age, 2)
 demo_summary$weekly_int <- round(demo_summary$weekly_int, 2)

@@ -16,6 +16,22 @@ source("R/Load_Helpers.R")
 ## Load data
 d <- load_most_recent_by_mtime("data", "TTA_mapped_response_meta")
 
+## Too fast responses
+d %>%
+  mutate(too_fast = ifelse(rt_mili <= 200,TRUE,FALSE)) %>%
+  summarize(prop = sum(too_fast)/n())
+
+## Too slow responses
+d %>%
+  filter(rt_mili > 200) |>
+  filter(!Nletters == 0) |>
+  group_by(participant) |>
+  mutate(pp_mean = mean(rt_mili),
+         pp_sd = sd(rt_mili),
+         z_rt_pp = (rt_mili - pp_mean)/pp_sd)|>
+  mutate(too_slow = ifelse(z_rt_pp > 3,TRUE,FALSE)) %>%
+  ungroup() %>%
+  summarize(prop = sum(too_slow)/n())
 
 ## Filter out responses faster than 200ms and responses that are more than 
 ## 2 standard deviations away from participant mean, and participants
@@ -103,6 +119,7 @@ ggplot(modelmm, aes(x = condition, y = mean,fill=condition))+
                         y_position = c(2900,3000,3100))
 ## Save plot
 ggsave(filename = 'Figures/rt_plot_condition.png' ,width = 9.5, height = 7.5, dpi = 600, units = "in", device='png')
+ggsave(filename = 'Figures/rt_plot_condition_poster.png' ,width = 9.75, height = 10.42, dpi = 600, units = "in", device='png')
 
 
 ## Long plot
