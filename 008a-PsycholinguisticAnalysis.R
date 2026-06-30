@@ -248,7 +248,14 @@ ggplot(aes(x = contrast, y = mean_diff,color = contrast), data = d_plot) +
         y = "raw difference (within-cue means)")
 ggsave("Figures/TTA_psychlong_contrasts.png", width = 12, height = 6)
 
-
+d %>%
+  pivot_longer(cols = c(aoa, Lg10WF, Nletters),
+               names_to = "measure",
+               values_to = "value") %>%
+  group_by(measure, condition) %>%
+  summarize(mean = mean(value,na.rm=T),
+            sd = sd(value,na.rm=T)) %>%
+  arrange(condition,desc(measure))
 
 
 
